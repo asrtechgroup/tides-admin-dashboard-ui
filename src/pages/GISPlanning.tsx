@@ -42,7 +42,7 @@ const GISPlanning = () => {
     name: '',
     irrigationType: 'Micro-drip',
     cropType: '',
-    status: 'Planned' as const
+    status: 'Planned' as 'Planned' | 'Active' | 'Completed'
   });
   
   const mapRef = useRef<any>(null);
