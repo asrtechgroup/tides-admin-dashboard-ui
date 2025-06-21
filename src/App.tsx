@@ -9,6 +9,7 @@ import Layout from "@/components/Layout";
 import Dashboard from "@/pages/Dashboard";
 import UserManagement from "@/pages/UserManagement";
 import Projects from "@/pages/Projects";
+import ProjectWizard from "@/pages/ProjectWizard";
 import BOQBuilder from "@/pages/BOQBuilder";
 import IrrigationTech from "@/pages/IrrigationTech";
 import GISPlanning from "@/pages/GISPlanning";
@@ -38,6 +39,7 @@ const App = () => (
               <Route index element={<Dashboard />} />
               <Route path="users" element={<UserManagement />} />
               <Route path="projects" element={<Projects />} />
+              <Route path="project-wizard/:projectId?" element={<ProjectWizard />} />
               <Route path="boq-builder" element={<BOQBuilder />} />
               <Route path="irrigation-tech" element={<IrrigationTech />} />
               <Route path="gis-planning" element={<GISPlanning />} />
