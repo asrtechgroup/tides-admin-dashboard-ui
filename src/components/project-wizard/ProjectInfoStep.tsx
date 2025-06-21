@@ -24,63 +24,103 @@ const ProjectInfoStep: React.FC<ProjectInfoStepProps> = ({ data, onUpdate }) => 
   const [availableDistricts, setAvailableDistricts] = useState<string[]>([]);
   const [availableWaterSourceNames, setAvailableWaterSourceNames] = useState<string[]>([]);
 
+  // Debug logs to track state changes
+  console.log('Current data:', data);
+  console.log('Available regions:', availableRegions);
+  console.log('Available districts:', availableDistricts);
+  console.log('Available water source names:', availableWaterSourceNames);
+
   useEffect(() => {
+    console.log('Zone changed to:', data.zone);
     if (data.zone && ZONES[data.zone as keyof typeof ZONES]) {
-      setAvailableRegions(ZONES[data.zone as keyof typeof ZONES]);
+      const regions = ZONES[data.zone as keyof typeof ZONES];
+      console.log('Setting available regions:', regions);
+      setAvailableRegions(regions);
     } else {
+      console.log('No zone selected or invalid zone, clearing regions');
       setAvailableRegions([]);
     }
   }, [data.zone]);
 
   useEffect(() => {
+    console.log('Regions changed to:', data.regions);
     const allDistricts: string[] = [];
     data.regions.forEach(region => {
       if (DISTRICTS[region]) {
+        console.log(`Adding districts for region ${region}:`, DISTRICTS[region]);
         allDistricts.push(...DISTRICTS[region]);
       }
     });
+    console.log('Setting available districts:', allDistricts);
     setAvailableDistricts(allDistricts);
   }, [data.regions]);
 
   useEffect(() => {
+    console.log('Districts or water source changed:', { districts: data.districts, waterSource: data.selectedWaterSource });
     if (data.districts.length > 0 && data.selectedWaterSource) {
       const allWaterSourceNames: string[] = [];
       data.districts.forEach(district => {
         if (WATER_SOURCE_NAMES[district] && WATER_SOURCE_NAMES[district][data.selectedWaterSource!]) {
+          console.log(`Adding water sources for district ${district}:`, WATER_SOURCE_NAMES[district][data.selectedWaterSource!]);
           allWaterSourceNames.push(...WATER_SOURCE_NAMES[district][data.selectedWaterSource!]);
         }
       });
-      setAvailableWaterSourceNames([...new Set(allWaterSourceNames)]);
+      const uniqueWaterSourceNames = [...new Set(allWaterSourceNames)];
+      console.log('Setting available water source names:', uniqueWaterSourceNames);
+      setAvailableWaterSourceNames(uniqueWaterSourceNames);
     } else {
+      console.log('No districts or water source selected, clearing water source names');
       setAvailableWaterSourceNames([]);
     }
   }, [data.districts, data.selectedWaterSource]);
 
   const handleInputChange = (field: keyof ProjectInfo, value: any) => {
+    console.log(`Updating field ${field} to:`, value);
     onUpdate({ ...data, [field]: value });
   };
 
   const handleZoneChange = (zone: string) => {
+    console.log('Zone change handler called with:', zone);
     handleInputChange('zone', zone);
+    // Reset dependent fields when zone changes
     handleInputChange('regions', []);
     handleInputChange('districts', []);
+    handleInputChange('selectedWaterSource', undefined);
+    handleInputChange('waterSourceName', undefined);
   };
 
   const handleRegionChange = (region: string) => {
+    console.log('Region change handler called with:', region);
     const currentRegions = data.regions || [];
     const newRegions = currentRegions.includes(region)
       ? currentRegions.filter(r => r !== region)
       : [...currentRegions, region];
+    console.log('New regions array:', newRegions);
     handleInputChange('regions', newRegions);
+    // Reset districts when regions change
     handleInputChange('districts', []);
+    handleInputChange('selectedWaterSource', undefined);
+    handleInputChange('waterSourceName', undefined);
   };
 
   const handleDistrictChange = (district: string) => {
+    console.log('District change handler called with:', district);
     const currentDistricts = data.districts || [];
     const newDistricts = currentDistricts.includes(district)
       ? currentDistricts.filter(d => d !== district)
       : [...currentDistricts, district];
+    console.log('New districts array:', newDistricts);
     handleInputChange('districts', newDistricts);
+    // Reset water source when districts change
+    handleInputChange('selectedWaterSource', undefined);
+    handleInputChange('waterSourceName', undefined);
+  };
+
+  const handleWaterSourceChange = (waterSource: string) => {
+    console.log('Water source change handler called with:', waterSource);
+    handleInputChange('selectedWaterSource', waterSource);
+    // Reset water source name when type changes
+    handleInputChange('waterSourceName', undefined);
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -198,7 +238,7 @@ const ProjectInfoStep: React.FC<ProjectInfoStepProps> = ({ data, onUpdate }) => 
 
               {availableRegions.length > 0 && (
                 <div>
-                  <Label>Regions</Label>
+                  <Label>Regions (Select multiple)</Label>
                   <div className="grid grid-cols-2 gap-2 mt-2">
                     {availableRegions.map((region) => (
                       <Button
@@ -211,12 +251,17 @@ const ProjectInfoStep: React.FC<ProjectInfoStepProps> = ({ data, onUpdate }) => 
                       </Button>
                     ))}
                   </div>
+                  {data.regions && data.regions.length > 0 && (
+                    <p className="text-sm text-stone-600 mt-2">
+                      Selected: {data.regions.join(', ')}
+                    </p>
+                  )}
                 </div>
               )}
 
               {availableDistricts.length > 0 && (
                 <div>
-                  <Label>Districts</Label>
+                  <Label>Districts (Select multiple)</Label>
                   <div className="grid grid-cols-2 gap-2 mt-2">
                     {availableDistricts.map((district) => (
                       <Button
@@ -229,6 +274,11 @@ const ProjectInfoStep: React.FC<ProjectInfoStepProps> = ({ data, onUpdate }) => 
                       </Button>
                     ))}
                   </div>
+                  {data.districts && data.districts.length > 0 && (
+                    <p className="text-sm text-stone-600 mt-2">
+                      Selected: {data.districts.join(', ')}
+                    </p>
+                  )}
                 </div>
               )}
             </CardContent>
@@ -300,7 +350,7 @@ const ProjectInfoStep: React.FC<ProjectInfoStepProps> = ({ data, onUpdate }) => 
             <CardContent className="space-y-4">
               <div>
                 <Label>Water Source Type</Label>
-                <Select value={data.selectedWaterSource} onValueChange={(value) => handleInputChange('selectedWaterSource', value)}>
+                <Select value={data.selectedWaterSource} onValueChange={handleWaterSourceChange}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select water source type" />
                   </SelectTrigger>
@@ -331,6 +381,14 @@ const ProjectInfoStep: React.FC<ProjectInfoStepProps> = ({ data, onUpdate }) => 
                   </Select>
                 </div>
               )}
+
+              {data.districts.length > 0 && data.selectedWaterSource && availableWaterSourceNames.length === 0 && (
+                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-sm text-yellow-800">
+                    No {data.selectedWaterSource.toLowerCase()} sources available for the selected districts.
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -354,6 +412,11 @@ const ProjectInfoStep: React.FC<ProjectInfoStepProps> = ({ data, onUpdate }) => 
                     </Button>
                   ))}
                 </div>
+                {data.cropVarieties && data.cropVarieties.length > 0 && (
+                  <p className="text-sm text-stone-600 mt-2">
+                    Selected: {data.cropVarieties.join(', ')}
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
