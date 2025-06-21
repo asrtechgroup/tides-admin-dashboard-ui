@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,9 +11,22 @@ import { CropCalendarEntry, MONTHS } from '@/types/project-wizard';
 interface CropCalendarStepProps {
   data: CropCalendarEntry[];
   onUpdate: (data: CropCalendarEntry[]) => void;
+  selectedCrops?: string[];
 }
 
-const CropCalendarStep: React.FC<CropCalendarStepProps> = ({ data, onUpdate }) => {
+const CropCalendarStep: React.FC<CropCalendarStepProps> = ({ data, onUpdate, selectedCrops = [] }) => {
+  // Auto-populate crops from previous step
+  useEffect(() => {
+    if (selectedCrops.length > 0 && data.length === 0) {
+      const newCropEntries: CropCalendarEntry[] = selectedCrops.map(crop => ({
+        cropName: crop,
+        plantedMonths: new Array(12).fill(false),
+        potentialArea: 0
+      }));
+      onUpdate(newCropEntries);
+    }
+  }, [selectedCrops, data.length, onUpdate]);
+
   const addCrop = () => {
     const newCrop: CropCalendarEntry = {
       cropName: '',
@@ -49,7 +62,7 @@ const CropCalendarStep: React.FC<CropCalendarStepProps> = ({ data, onUpdate }) =
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-lg">Crop Calendar</CardTitle>
-              <CardDescription>Define planting schedule and potential areas</CardDescription>
+              <CardDescription>Define planting schedule and potential areas for each crop</CardDescription>
             </div>
             <Button onClick={addCrop} size="sm">
               <Plus className="w-4 h-4 mr-2" />
@@ -60,7 +73,7 @@ const CropCalendarStep: React.FC<CropCalendarStepProps> = ({ data, onUpdate }) =
         <CardContent>
           {data.length === 0 ? (
             <div className="text-center py-8 text-stone-500">
-              <p>No crops added yet. Click "Add Crop" to get started.</p>
+              <p>No crops available. Please select crops in the previous step or click "Add Crop" to add manually.</p>
             </div>
           ) : (
             <div className="space-y-6">
@@ -99,7 +112,7 @@ const CropCalendarStep: React.FC<CropCalendarStepProps> = ({ data, onUpdate }) =
                       </div>
                       
                       <div>
-                        <Label>Planting Months</Label>
+                        <Label>Planting Months (Select planting to harvest period)</Label>
                         <div className="grid grid-cols-6 gap-2 mt-2">
                           {MONTHS.map((month, monthIndex) => (
                             <div key={month} className="flex items-center space-x-2">
@@ -126,7 +139,7 @@ const CropCalendarStep: React.FC<CropCalendarStepProps> = ({ data, onUpdate }) =
               <Card className="bg-stone-50">
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between">
-                    <span className="font-medium">Total Potential Area:</span>
+                    <span className="font-medium">Total Crop Area:</span>
                     <span className="text-lg font-bold text-emerald-600">
                       {totalArea.toFixed(2)} ha
                     </span>

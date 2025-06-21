@@ -117,6 +117,7 @@ const ProjectWizard = () => {
           <CropCalendarStep
             data={projectData.cropCalendar}
             onUpdate={(cropCalendar) => updateProjectData({ cropCalendar })}
+            selectedCrops={projectData.projectInfo.cropVarieties}
           />
         );
       case 2:
