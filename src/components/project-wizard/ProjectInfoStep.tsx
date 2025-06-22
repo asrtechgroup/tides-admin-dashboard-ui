@@ -1,16 +1,12 @@
 
-import React, { useRef, useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MapContainer, TileLayer } from 'react-leaflet';
-import { Upload, Map } from 'lucide-react';
-import { ProjectInfo, ZONES, REGIONS, DISTRICTS, WATER_SOURCES, WATER_SOURCE_NAMES, CROP_VARIETIES } from '@/types/project-wizard';
-import { useToast } from '@/hooks/use-toast';
-import 'leaflet/dist/leaflet.css';
+import React, { useState, useEffect } from 'react';
+import { ProjectInfo, ZONES, REGIONS, DISTRICTS, WATER_SOURCE_NAMES } from '@/types/project-wizard';
+import ProjectDetailsCard from './cards/ProjectDetailsCard';
+import LocationSelectionCard from './cards/LocationSelectionCard';
+import FileUploadCard from './cards/FileUploadCard';
+import MapPreviewCard from './cards/MapPreviewCard';
+import WaterSourceCard from './cards/WaterSourceCard';
+import CropSelectionCard from './cards/CropSelectionCard';
 
 interface ProjectInfoStepProps {
   data: ProjectInfo;
@@ -18,8 +14,6 @@ interface ProjectInfoStepProps {
 }
 
 const ProjectInfoStep: React.FC<ProjectInfoStepProps> = ({ data, onUpdate }) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const { toast } = useToast();
   const [availableRegions, setAvailableRegions] = useState<string[]>([]);
   const [availableDistricts, setAvailableDistricts] = useState<string[]>([]);
   const [availableWaterSourceNames, setAvailableWaterSourceNames] = useState<string[]>([]);
@@ -123,24 +117,6 @@ const ProjectInfoStep: React.FC<ProjectInfoStepProps> = ({ data, onUpdate }) => 
     handleInputChange('waterSourceName', undefined);
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      console.log('Uploading file:', file);
-      toast({
-        title: "File Uploaded",
-        description: `${file.name} has been uploaded successfully.`,
-      });
-      setTimeout(() => {
-        handleInputChange('soilType', 'Loamy Clay');
-        toast({
-          title: "Soil Type Detected",
-          description: "Soil analysis complete: Loamy Clay",
-        });
-      }, 2000);
-    }
-  };
-
   const handleCropChange = (crop: string) => {
     const currentCrops = data.cropVarieties || [];
     const newCrops = currentCrops.includes(crop)
@@ -153,273 +129,27 @@ const ProjectInfoStep: React.FC<ProjectInfoStepProps> = ({ data, onUpdate }) => 
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Project Details</CardTitle>
-              <CardDescription>Basic project information</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="projectName">Project Name</Label>
-                <Input
-                  id="projectName"
-                  value={data.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  placeholder="Enter project name"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={data.description}
-                  onChange={(e) => handleInputChange('description', e.target.value)}
-                  placeholder="Project description"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="schemeName">Scheme Name</Label>
-                <Input
-                  id="schemeName"
-                  value={data.schemeName}
-                  onChange={(e) => handleInputChange('schemeName', e.target.value)}
-                  placeholder="Enter scheme name"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="totalArea">Total Area (Ha)</Label>
-                  <Input
-                    id="totalArea"
-                    type="number"
-                    value={data.totalArea || ''}
-                    onChange={(e) => handleInputChange('totalArea', parseFloat(e.target.value) || 0)}
-                    placeholder="0"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="potentialArea">Potential Area (Ha)</Label>
-                  <Input
-                    id="potentialArea"
-                    type="number"
-                    value={data.potentialArea || ''}
-                    onChange={(e) => handleInputChange('potentialArea', parseFloat(e.target.value) || 0)}
-                    placeholder="0"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Location Selection</CardTitle>
-              <CardDescription>Select zone, regions, and districts</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label>Zone</Label>
-                <Select value={data.zone} onValueChange={handleZoneChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select zone" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.keys(ZONES).map((zone) => (
-                      <SelectItem key={zone} value={zone}>
-                        {zone}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {availableRegions.length > 0 && (
-                <div>
-                  <Label>Regions (Select multiple)</Label>
-                  <div className="grid grid-cols-2 gap-2 mt-2">
-                    {availableRegions.map((region) => (
-                      <Button
-                        key={region}
-                        variant={data.regions?.includes(region) ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handleRegionChange(region)}
-                      >
-                        {region}
-                      </Button>
-                    ))}
-                  </div>
-                  {data.regions && data.regions.length > 0 && (
-                    <p className="text-sm text-stone-600 mt-2">
-                      Selected: {data.regions.join(', ')}
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {availableDistricts.length > 0 && (
-                <div>
-                  <Label>Districts (Select multiple)</Label>
-                  <div className="grid grid-cols-2 gap-2 mt-2">
-                    {availableDistricts.map((district) => (
-                      <Button
-                        key={district}
-                        variant={data.districts?.includes(district) ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handleDistrictChange(district)}
-                      >
-                        {district}
-                      </Button>
-                    ))}
-                  </div>
-                  {data.districts && data.districts.length > 0 && (
-                    <p className="text-sm text-stone-600 mt-2">
-                      Selected: {data.districts.join(', ')}
-                    </p>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">File Upload</CardTitle>
-              <CardDescription>Upload shapefile or KMZ file</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <Button
-                  onClick={() => fileInputRef.current?.click()}
-                  variant="outline"
-                  className="w-full"
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Upload Shapefile/KMZ
-                </Button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".shp,.kmz,.kml"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
-                {data.soilType && (
-                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <p className="text-sm text-green-800">
-                      <strong>Detected Soil Type:</strong> {data.soilType}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <ProjectDetailsCard data={data} onUpdate={handleInputChange} />
+          <LocationSelectionCard
+            data={data}
+            availableRegions={availableRegions}
+            availableDistricts={availableDistricts}
+            onZoneChange={handleZoneChange}
+            onRegionChange={handleRegionChange}
+            onDistrictChange={handleDistrictChange}
+          />
+          <FileUploadCard data={data} onUpdate={handleInputChange} />
         </div>
 
         <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center space-x-2">
-                <Map className="w-5 h-5 text-emerald-600" />
-                <CardTitle className="text-lg">Map Preview</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-64 rounded-lg overflow-hidden border border-stone-200">
-                <MapContainer
-                  center={[21.1458, 79.0882]}
-                  zoom={10}
-                  style={{ height: '100%', width: '100%' }}
-                >
-                  <TileLayer
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                  />
-                </MapContainer>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Water Source</CardTitle>
-              <CardDescription>Select water source type and specific source</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label>Water Source Type</Label>
-                <Select value={data.selectedWaterSource} onValueChange={handleWaterSourceChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select water source type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {WATER_SOURCES.map((source) => (
-                      <SelectItem key={source} value={source}>
-                        {source}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {availableWaterSourceNames.length > 0 && (
-                <div>
-                  <Label>Water Source Name</Label>
-                  <Select value={data.waterSourceName} onValueChange={(value) => handleInputChange('waterSourceName', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select specific water source" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableWaterSourceNames.map((sourceName) => (
-                        <SelectItem key={sourceName} value={sourceName}>
-                          {sourceName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              {data.districts.length > 0 && data.selectedWaterSource && availableWaterSourceNames.length === 0 && (
-                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <p className="text-sm text-yellow-800">
-                    No {data.selectedWaterSource.toLowerCase()} sources available for the selected districts.
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Crop Varieties</CardTitle>
-              <CardDescription>Select crops for your irrigation scheme</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label>Available Crops</Label>
-                <div className="grid grid-cols-2 gap-2 mt-2">
-                  {CROP_VARIETIES.map((crop) => (
-                    <Button
-                      key={crop}
-                      variant={data.cropVarieties?.includes(crop) ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handleCropChange(crop)}
-                    >
-                      {crop}
-                    </Button>
-                  ))}
-                </div>
-                {data.cropVarieties && data.cropVarieties.length > 0 && (
-                  <p className="text-sm text-stone-600 mt-2">
-                    Selected: {data.cropVarieties.join(', ')}
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <MapPreviewCard />
+          <WaterSourceCard
+            data={data}
+            availableWaterSourceNames={availableWaterSourceNames}
+            onWaterSourceChange={handleWaterSourceChange}
+            onUpdate={handleInputChange}
+          />
+          <CropSelectionCard data={data} onCropChange={handleCropChange} />
         </div>
       </div>
     </div>
