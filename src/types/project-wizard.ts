@@ -1,4 +1,3 @@
-
 export interface ProjectInfo {
   name: string;
   description: string;
@@ -115,29 +114,129 @@ export const WATER_SOURCES = [
   'Rainwater Harvesting'
 ];
 
-// Water source names by district
+// Water source names by region instead of district
 export const WATER_SOURCE_NAMES: Record<string, Record<string, string[]>> = {
-  'Kigoma Urban': {
+  Kigoma: {
     Lake: ['Lake Tanganyika'],
-    River: ['Malagarasi River', 'Ruchugi River'],
-    Groundwater: ['Kigoma Aquifer', 'Urban Wells']
+    River: ['Malagarasi River', 'Ruchugi River', 'Lugufu River'],
+    Groundwater: ['Kigoma Aquifer', 'Western Rift Aquifer']
   },
-  'Moshi Urban': {
-    River: ['Pangani River', 'Weruweru River'],
-    Groundwater: ['Kilimanjaro Aquifer'],
-    Canal: ['Furrow Canal System']
+  Kilimanjaro: {
+    River: ['Pangani River', 'Weruweru River', 'Kikuletwa River'],
+    Groundwater: ['Kilimanjaro Aquifer', 'Northern Highlands Aquifer'],
+    Canal: ['Furrow Canal System', 'Traditional Irrigation Canals']
   },
-  'Arusha City': {
-    River: ['Themi River', 'Tengeru River'],
-    Lake: ['Lake Duluti'],
-    Groundwater: ['Arusha Aquifer']
+  Arusha: {
+    River: ['Themi River', 'Tengeru River', 'Mto wa Mbu River'],
+    Lake: ['Lake Duluti', 'Lake Manyara'],
+    Groundwater: ['Arusha Aquifer', 'Northern Tanzania Aquifer']
   },
-  'Dodoma Urban': {
-    River: ['Kizigo River', 'Bubu River'],
-    Groundwater: ['Central Plateau Aquifer'],
-    Reservoir: ['Hombolo Dam']
+  Tanga: {
+    River: ['Pangani River', 'Umba River', 'Zigi River'],
+    Groundwater: ['Coastal Aquifer', 'Tanga Regional Aquifer'],
+    Canal: ['Pangani Canal System']
   },
-  // Add more districts as needed - this is a sample
+  Dodoma: {
+    River: ['Kizigo River', 'Bubu River', 'Mvumi River'],
+    Groundwater: ['Central Plateau Aquifer', 'Dodoma Basin Aquifer'],
+    Reservoir: ['Hombolo Dam', 'Msalatu Dam']
+  },
+  Singida: {
+    River: ['Wembere River', 'Kinyasungwe River'],
+    Lake: ['Lake Singida', 'Lake Kindai'],
+    Groundwater: ['Central Plateau Aquifer']
+  },
+  Manyara: {
+    River: ['Tarangire River', 'Kwa Mtoro River'],
+    Lake: ['Lake Manyara', 'Lake Babati'],
+    Groundwater: ['Northern Highlands Aquifer']
+  },
+  Mbeya: {
+    River: ['Great Ruaha River', 'Songwe River', 'Kiwira River'],
+    Lake: ['Lake Rukwa', 'Lake Nyasa'],
+    Groundwater: ['Southern Highlands Aquifer']
+  },
+  Iringa: {
+    River: ['Great Ruaha River', 'Little Ruaha River', 'Kilombero River'],
+    Groundwater: ['Southern Highlands Aquifer', 'Iringa Plateau Aquifer'],
+    Reservoir: ['Mtera Dam', 'Kidatu Dam']
+  },
+  Njombe: {
+    River: ['Ruhudje River', 'Livingstone River'],
+    Lake: ['Lake Nyasa'],
+    Groundwater: ['Southern Highlands Aquifer']
+  },
+  Songwe: {
+    River: ['Songwe River', 'Kiwira River'],
+    Lake: ['Lake Nyasa'],
+    Groundwater: ['Southern Highlands Aquifer']
+  },
+  Morogoro: {
+    River: ['Wami River', 'Ruvu River', 'Uluguru River'],
+    Groundwater: ['Eastern Arc Aquifer', 'Coastal Basin Aquifer'],
+    Canal: ['Wami-Ruvu Canal System']
+  },
+  Pwani: {
+    River: ['Wami River', 'Ruvu River'],
+    Groundwater: ['Coastal Aquifer', 'Dar es Salaam Aquifer'],
+    Canal: ['Coastal Irrigation Canals']
+  },
+  'Dar es Salaam': {
+    River: ['Msimbazi River', 'Kizinga River'],
+    Groundwater: ['Dar es Salaam Aquifer', 'Coastal Aquifer']
+  },
+  Mwanza: {
+    Lake: ['Lake Victoria'],
+    River: ['Mara River', 'Grumeti River'],
+    Groundwater: ['Lake Victoria Basin Aquifer']
+  },
+  Geita: {
+    Lake: ['Lake Victoria'],
+    River: ['Mara River', 'Nyashishi River'],
+    Groundwater: ['Lake Victoria Basin Aquifer']
+  },
+  Kagera: {
+    Lake: ['Lake Victoria'],
+    River: ['Kagera River', 'Nyabarongo River'],
+    Groundwater: ['Lake Victoria Basin Aquifer']
+  },
+  Simiyu: {
+    Lake: ['Lake Victoria'],
+    River: ['Simiyu River', 'Duma River'],
+    Groundwater: ['Lake Victoria Basin Aquifer']
+  },
+  Tabora: {
+    River: ['Wembere River', 'Ugalla River'],
+    Groundwater: ['Central Plateau Aquifer', 'Tabora Regional Aquifer']
+  },
+  Shinyanga: {
+    River: ['Wembere River', 'Manonga River'],
+    Lake: ['Lake Shinyanga'],
+    Groundwater: ['Central Plateau Aquifer']
+  },
+  Katavi: {
+    River: ['Katuma River', 'Ugalla River'],
+    Lake: ['Lake Katavi', 'Lake Chada'],
+    Groundwater: ['Western Rift Aquifer']
+  },
+  Rukwa: {
+    Lake: ['Lake Rukwa', 'Lake Tanganyika'],
+    River: ['Momba River', 'Saisi River'],
+    Groundwater: ['Western Rift Aquifer']
+  },
+  Mtwara: {
+    River: ['Ruvuma River', 'Msangasi River'],
+    Groundwater: ['Coastal Aquifer', 'Southern Coastal Aquifer']
+  },
+  Lindi: {
+    River: ['Ruvuma River', 'Matandu River'],
+    Groundwater: ['Coastal Aquifer', 'Southern Coastal Aquifer']
+  },
+  Ruvuma: {
+    River: ['Ruvuma River', 'Muhuwesi River'],
+    Lake: ['Lake Nyasa'],
+    Groundwater: ['Southern Highlands Aquifer']
+  }
 };
 
 export const CROP_VARIETIES = [

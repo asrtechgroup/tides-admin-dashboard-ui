@@ -27,14 +27,15 @@ const LocationSelectionCard: React.FC<LocationSelectionCardProps> = ({
     <Card>
       <CardHeader>
         <CardTitle className="text-lg">Location Selection</CardTitle>
-        <CardDescription>Select zone, regions, and districts</CardDescription>
+        <CardDescription>Select zone, regions, and districts in order</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6">
+        {/* Zone Selection - First Row */}
         <div>
           <Label>Zone</Label>
           <Select value={data.zone} onValueChange={onZoneChange}>
             <SelectTrigger>
-              <SelectValue placeholder="Select zone" />
+              <SelectValue placeholder="Select zone first" />
             </SelectTrigger>
             <SelectContent>
               {Object.keys(ZONES).map((zone) => (
@@ -46,49 +47,63 @@ const LocationSelectionCard: React.FC<LocationSelectionCardProps> = ({
           </Select>
         </div>
 
-        {availableRegions.length > 0 && (
-          <div>
-            <Label>Regions (Select multiple)</Label>
-            <div className="grid grid-cols-2 gap-2 mt-2">
-              {availableRegions.map((region) => (
-                <Button
-                  key={region}
-                  variant={data.regions?.includes(region) ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => onRegionChange(region)}
-                >
-                  {region}
-                </Button>
-              ))}
+        {/* Region and District Selection - Second Row */}
+        {data.zone && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Regions Selection */}
+            <div>
+              <Label>Regions (Select multiple)</Label>
+              <div className="grid grid-cols-1 gap-2 mt-2 max-h-32 overflow-y-auto">
+                {availableRegions.map((region) => (
+                  <Button
+                    key={region}
+                    variant={data.regions?.includes(region) ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => onRegionChange(region)}
+                    className="text-left justify-start"
+                  >
+                    {region}
+                  </Button>
+                ))}
+              </div>
+              {data.regions && data.regions.length > 0 && (
+                <p className="text-xs text-stone-600 mt-2">
+                  Selected: {data.regions.join(', ')}
+                </p>
+              )}
+              {availableRegions.length === 0 && (
+                <p className="text-sm text-stone-500 mt-2">Select a zone first</p>
+              )}
             </div>
-            {data.regions && data.regions.length > 0 && (
-              <p className="text-sm text-stone-600 mt-2">
-                Selected: {data.regions.join(', ')}
-              </p>
-            )}
-          </div>
-        )}
 
-        {availableDistricts.length > 0 && (
-          <div>
-            <Label>Districts (Select multiple)</Label>
-            <div className="grid grid-cols-2 gap-2 mt-2">
-              {availableDistricts.map((district) => (
-                <Button
-                  key={district}
-                  variant={data.districts?.includes(district) ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => onDistrictChange(district)}
-                >
-                  {district}
-                </Button>
-              ))}
+            {/* Districts Selection */}
+            <div>
+              <Label>Districts (Select multiple)</Label>
+              <div className="grid grid-cols-1 gap-2 mt-2 max-h-32 overflow-y-auto">
+                {availableDistricts.map((district) => (
+                  <Button
+                    key={district}
+                    variant={data.districts?.includes(district) ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => onDistrictChange(district)}
+                    className="text-left justify-start"
+                  >
+                    {district}
+                  </Button>
+                ))}
+              </div>
+              {data.districts && data.districts.length > 0 && (
+                <p className="text-xs text-stone-600 mt-2">
+                  Selected: {data.districts.join(', ')}
+                </p>
+              )}
+              {data.regions && data.regions.length > 0 && availableDistricts.length === 0 && (
+                <p className="text-sm text-stone-500 mt-2">No districts available for selected regions</p>
+              )}
+              {(!data.regions || data.regions.length === 0) && (
+                <p className="text-sm text-stone-500 mt-2">Select regions first</p>
+              )}
             </div>
-            {data.districts && data.districts.length > 0 && (
-              <p className="text-sm text-stone-600 mt-2">
-                Selected: {data.districts.join(', ')}
-              </p>
-            )}
           </div>
         )}
       </CardContent>

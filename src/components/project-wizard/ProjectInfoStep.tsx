@@ -49,24 +49,25 @@ const ProjectInfoStep: React.FC<ProjectInfoStepProps> = ({ data, onUpdate }) => 
     setAvailableDistricts(allDistricts);
   }, [data.regions]);
 
+  // Updated useEffect to use regions instead of districts for water source names
   useEffect(() => {
-    console.log('Districts or water source changed:', { districts: data.districts, waterSource: data.selectedWaterSource });
-    if (data.districts.length > 0 && data.selectedWaterSource) {
+    console.log('Regions or water source changed:', { regions: data.regions, waterSource: data.selectedWaterSource });
+    if (data.regions.length > 0 && data.selectedWaterSource) {
       const allWaterSourceNames: string[] = [];
-      data.districts.forEach(district => {
-        if (WATER_SOURCE_NAMES[district] && WATER_SOURCE_NAMES[district][data.selectedWaterSource!]) {
-          console.log(`Adding water sources for district ${district}:`, WATER_SOURCE_NAMES[district][data.selectedWaterSource!]);
-          allWaterSourceNames.push(...WATER_SOURCE_NAMES[district][data.selectedWaterSource!]);
+      data.regions.forEach(region => {
+        if (WATER_SOURCE_NAMES[region] && WATER_SOURCE_NAMES[region][data.selectedWaterSource!]) {
+          console.log(`Adding water sources for region ${region}:`, WATER_SOURCE_NAMES[region][data.selectedWaterSource!]);
+          allWaterSourceNames.push(...WATER_SOURCE_NAMES[region][data.selectedWaterSource!]);
         }
       });
       const uniqueWaterSourceNames = [...new Set(allWaterSourceNames)];
       console.log('Setting available water source names:', uniqueWaterSourceNames);
       setAvailableWaterSourceNames(uniqueWaterSourceNames);
     } else {
-      console.log('No districts or water source selected, clearing water source names');
+      console.log('No regions or water source selected, clearing water source names');
       setAvailableWaterSourceNames([]);
     }
-  }, [data.districts, data.selectedWaterSource]);
+  }, [data.regions, data.selectedWaterSource]);
 
   const handleInputChange = (field: keyof ProjectInfo, value: any) => {
     console.log(`Updating field ${field} to:`, value);
@@ -91,7 +92,7 @@ const ProjectInfoStep: React.FC<ProjectInfoStepProps> = ({ data, onUpdate }) => 
       : [...currentRegions, region];
     console.log('New regions array:', newRegions);
     handleInputChange('regions', newRegions);
-    // Reset districts when regions change
+    // Reset districts and water sources when regions change
     handleInputChange('districts', []);
     handleInputChange('selectedWaterSource', undefined);
     handleInputChange('waterSourceName', undefined);
@@ -105,9 +106,6 @@ const ProjectInfoStep: React.FC<ProjectInfoStepProps> = ({ data, onUpdate }) => 
       : [...currentDistricts, district];
     console.log('New districts array:', newDistricts);
     handleInputChange('districts', newDistricts);
-    // Reset water source when districts change
-    handleInputChange('selectedWaterSource', undefined);
-    handleInputChange('waterSourceName', undefined);
   };
 
   const handleWaterSourceChange = (waterSource: string) => {
