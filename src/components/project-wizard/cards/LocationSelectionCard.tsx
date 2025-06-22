@@ -33,7 +33,7 @@ const LocationSelectionCard: React.FC<LocationSelectionCardProps> = ({
         {/* Zone Selection - First Row */}
         <div>
           <Label>Zone</Label>
-          <Select value={data.zone} onValueChange={onZoneChange}>
+          <Select value={data.zone || ""} onValueChange={onZoneChange}>
             <SelectTrigger>
               <SelectValue placeholder="Select zone first" />
             </SelectTrigger>
@@ -48,7 +48,7 @@ const LocationSelectionCard: React.FC<LocationSelectionCardProps> = ({
         </div>
 
         {/* Region and District Selection - Second Row */}
-        {data.zone && (
+        {data.zone && availableRegions.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Regions Selection */}
             <div>
@@ -70,9 +70,6 @@ const LocationSelectionCard: React.FC<LocationSelectionCardProps> = ({
                 <p className="text-xs text-stone-600 mt-2">
                   Selected: {data.regions.join(', ')}
                 </p>
-              )}
-              {availableRegions.length === 0 && (
-                <p className="text-sm text-stone-500 mt-2">Select a zone first</p>
               )}
             </div>
 
@@ -104,6 +101,13 @@ const LocationSelectionCard: React.FC<LocationSelectionCardProps> = ({
                 <p className="text-sm text-stone-500 mt-2">Select regions first</p>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Show message when no zone is selected */}
+        {!data.zone && (
+          <div className="text-sm text-stone-500 mt-2">
+            Please select a zone first to see available regions and districts.
           </div>
         )}
       </CardContent>

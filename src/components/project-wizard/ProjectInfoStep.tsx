@@ -39,20 +39,21 @@ const ProjectInfoStep: React.FC<ProjectInfoStepProps> = ({ data, onUpdate }) => 
   useEffect(() => {
     console.log('Regions changed to:', data.regions);
     const allDistricts: string[] = [];
-    data.regions.forEach(region => {
-      if (DISTRICTS[region]) {
-        console.log(`Adding districts for region ${region}:`, DISTRICTS[region]);
-        allDistricts.push(...DISTRICTS[region]);
-      }
-    });
+    if (data.regions && data.regions.length > 0) {
+      data.regions.forEach(region => {
+        if (DISTRICTS[region]) {
+          console.log(`Adding districts for region ${region}:`, DISTRICTS[region]);
+          allDistricts.push(...DISTRICTS[region]);
+        }
+      });
+    }
     console.log('Setting available districts:', allDistricts);
     setAvailableDistricts(allDistricts);
   }, [data.regions]);
 
-  // Updated useEffect to use regions instead of districts for water source names
   useEffect(() => {
     console.log('Regions or water source changed:', { regions: data.regions, waterSource: data.selectedWaterSource });
-    if (data.regions.length > 0 && data.selectedWaterSource) {
+    if (data.regions && data.regions.length > 0 && data.selectedWaterSource) {
       const allWaterSourceNames: string[] = [];
       data.regions.forEach(region => {
         if (WATER_SOURCE_NAMES[region] && WATER_SOURCE_NAMES[region][data.selectedWaterSource!]) {
@@ -71,17 +72,21 @@ const ProjectInfoStep: React.FC<ProjectInfoStepProps> = ({ data, onUpdate }) => 
 
   const handleInputChange = (field: keyof ProjectInfo, value: any) => {
     console.log(`Updating field ${field} to:`, value);
-    onUpdate({ ...data, [field]: value });
+    const updatedData = { ...data, [field]: value };
+    onUpdate(updatedData);
   };
 
   const handleZoneChange = (zone: string) => {
     console.log('Zone change handler called with:', zone);
-    handleInputChange('zone', zone);
-    // Reset dependent fields when zone changes
-    handleInputChange('regions', []);
-    handleInputChange('districts', []);
-    handleInputChange('selectedWaterSource', undefined);
-    handleInputChange('waterSourceName', undefined);
+    const updatedData = {
+      ...data,
+      zone,
+      regions: [],
+      districts: [],
+      selectedWaterSource: undefined,
+      waterSourceName: undefined
+    };
+    onUpdate(updatedData);
   };
 
   const handleRegionChange = (region: string) => {
@@ -91,11 +96,15 @@ const ProjectInfoStep: React.FC<ProjectInfoStepProps> = ({ data, onUpdate }) => 
       ? currentRegions.filter(r => r !== region)
       : [...currentRegions, region];
     console.log('New regions array:', newRegions);
-    handleInputChange('regions', newRegions);
-    // Reset districts and water sources when regions change
-    handleInputChange('districts', []);
-    handleInputChange('selectedWaterSource', undefined);
-    handleInputChange('waterSourceName', undefined);
+    
+    const updatedData = {
+      ...data,
+      regions: newRegions,
+      districts: [],
+      selectedWaterSource: undefined,
+      waterSourceName: undefined
+    };
+    onUpdate(updatedData);
   };
 
   const handleDistrictChange = (district: string) => {
@@ -105,14 +114,22 @@ const ProjectInfoStep: React.FC<ProjectInfoStepProps> = ({ data, onUpdate }) => 
       ? currentDistricts.filter(d => d !== district)
       : [...currentDistricts, district];
     console.log('New districts array:', newDistricts);
-    handleInputChange('districts', newDistricts);
+    
+    const updatedData = {
+      ...data,
+      districts: newDistricts
+    };
+    onUpdate(updatedData);
   };
 
   const handleWaterSourceChange = (waterSource: string) => {
     console.log('Water source change handler called with:', waterSource);
-    handleInputChange('selectedWaterSource', waterSource);
-    // Reset water source name when type changes
-    handleInputChange('waterSourceName', undefined);
+    const updatedData = {
+      ...data,
+      selectedWaterSource: waterSource,
+      waterSourceName: undefined
+    };
+    onUpdate(updatedData);
   };
 
   const handleCropChange = (crop: string) => {
