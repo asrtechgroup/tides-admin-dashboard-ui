@@ -81,7 +81,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
                       weight: 2
                     }
                   },
-                  circlemarker: false,
                   marker: {
                     icon: L.divIcon({
                       className: 'leaflet-div-icon leaflet-editing-icon',
@@ -89,10 +88,11 @@ const MapComponent: React.FC<MapComponentProps> = ({
                     })
                   },
                   polyline: false,
+                  circlemarker: false
                 }}
                 edit={{
                   edit: true,
-                  remove: true,
+                  remove: true
                 }}
               />
             </FeatureGroup>
