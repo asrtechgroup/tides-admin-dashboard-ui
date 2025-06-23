@@ -62,11 +62,31 @@ const MapComponent: React.FC<MapComponentProps> = ({
                 position="topright"
                 onCreated={onCreated}
                 draw={{
-                  rectangle: true,
-                  polygon: true,
-                  circle: true,
+                  rectangle: {
+                    shapeOptions: {
+                      color: '#3b82f6',
+                      weight: 2
+                    }
+                  },
+                  polygon: {
+                    shapeOptions: {
+                      color: '#10b981',
+                      weight: 2
+                    }
+                  },
+                  circle: {
+                    shapeOptions: {
+                      color: '#f59e0b',
+                      weight: 2
+                    }
+                  },
                   circlemarker: false,
-                  marker: true,
+                  marker: {
+                    icon: L.divIcon({
+                      className: 'leaflet-div-icon leaflet-editing-icon',
+                      iconSize: [12, 12]
+                    })
+                  },
                   polyline: false,
                 }}
                 edit={{

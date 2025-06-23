@@ -21,6 +21,9 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
+// Make L available globally for the MapComponent
+(window as any).L = L;
+
 const GISPlanning = () => {
   const [selectedZone, setSelectedZone] = useState<Zone | null>(null);
   const [zones, setZones] = useState<Zone[]>([]);
