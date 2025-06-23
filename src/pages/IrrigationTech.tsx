@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Droplets, Settings, Target } from 'lucide-react';
-import { I`IrrigationTechnology } from '@/types/irrigation';
+import { IrrigationTechnology } from '@/types/irrigation';
 import TechnologyForm from '@/components/irrigation/TechnologyForm';
 import TechnologiesTable from '@/components/irrigation/TechnologiesTable';
 import { toast } from 'sonner';
