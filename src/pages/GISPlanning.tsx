@@ -9,6 +9,8 @@ import ZonePropertiesPanel from '@/components/gis/ZonePropertiesPanel';
 import ZonesList from '@/components/gis/ZonesList';
 import DrawingToolsPanel from '@/components/gis/DrawingToolsPanel';
 import PageHeader from '@/components/gis/PageHeader';
+import SchemeDesignPanel from '@/components/gis/SchemeDesignPanel';
+import BOQGenerationPanel from '@/components/gis/BOQGenerationPanel';
 
 // Fix for default markers in React Leaflet
 import L from 'leaflet';
@@ -24,6 +26,7 @@ const GISPlanning = () => {
   const [zones, setZones] = useState<Zone[]>([]);
   const [activeLayer, setActiveLayer] = useState('satellite');
   const [isEditing, setIsEditing] = useState(false);
+  const [activeTab, setActiveTab] = useState('planning');
   const [formData, setFormData] = useState<ZoneFormData>({
     name: '',
     irrigationType: 'Micro-drip',
@@ -42,7 +45,7 @@ const GISPlanning = () => {
     const area = calculateArea(layer);
     const newZone: Zone = {
       id: Date.now(),
-      name: `New Zone ${zones.length + 1}`,
+      name: `Zone ${zones.length + 1}`,
       area: area,
       irrigationType: 'Micro-drip',
       cropType: '',
@@ -61,7 +64,7 @@ const GISPlanning = () => {
     
     toast({
       title: "Zone Created",
-      description: `${newZone.name} has been added to the map.`,
+      description: `${newZone.name} has been added to the planning area.`,
     });
   };
 
@@ -83,8 +86,8 @@ const GISPlanning = () => {
     setIsEditing(false);
 
     toast({
-      title: "Zone Saved",
-      description: `${updatedZone.name} has been updated successfully.`,
+      title: "Zone Updated",
+      description: `${updatedZone.name} has been saved successfully.`,
     });
   };
 
@@ -116,7 +119,7 @@ const GISPlanning = () => {
     handleExportZones(zones);
     toast({
       title: "Export Complete",
-      description: "Zone data has been exported successfully.",
+      description: "Scheme data has been exported successfully.",
     });
   };
 
@@ -124,6 +127,40 @@ const GISPlanning = () => {
     toast({
       title: "Upload Feature",
       description: "Shapefile upload functionality would be implemented here.",
+    });
+  };
+
+  const handleGenerateDesign = () => {
+    if (zones.length === 0) {
+      toast({
+        title: "No Zones Available",
+        description: "Please create at least one zone before generating design.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setActiveTab('design');
+    toast({
+      title: "Design Generated",
+      description: "Irrigation scheme design has been created based on your zones.",
+    });
+  };
+
+  const handleGenerateBOQ = () => {
+    if (zones.length === 0) {
+      toast({
+        title: "No Zones Available",
+        description: "Please create zones and design before generating BOQ.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setActiveTab('boq');
+    toast({
+      title: "BOQ Generated",
+      description: "Bill of Quantities has been calculated for your irrigation scheme.",
     });
   };
 
@@ -139,24 +176,70 @@ const GISPlanning = () => {
         />
 
         <div className="space-y-6">
-          <DrawingToolsPanel />
-          
-          <ZonePropertiesPanel
-            selectedZone={selectedZone}
-            isEditing={isEditing}
-            formData={formData}
-            setFormData={setFormData}
-            setIsEditing={setIsEditing}
-            onSaveZone={handleSaveZone}
-          />
+          {activeTab === 'planning' && (
+            <>
+              <DrawingToolsPanel />
+              
+              <ZonePropertiesPanel
+                selectedZone={selectedZone}
+                isEditing={isEditing}
+                formData={formData}
+                setFormData={setFormData}
+                setIsEditing={setIsEditing}
+                onSaveZone={handleSaveZone}
+              />
 
-          <ZonesList
-            zones={zones}
-            selectedZone={selectedZone}
-            onZoneSelect={handleZoneSelect}
-            onDeleteZone={handleDeleteZone}
-          />
+              <ZonesList
+                zones={zones}
+                selectedZone={selectedZone}
+                onZoneSelect={handleZoneSelect}
+                onDeleteZone={handleDeleteZone}
+              />
+            </>
+          )}
+
+          {activeTab === 'design' && (
+            <SchemeDesignPanel
+              zones={zones}
+              onGenerateBOQ={handleGenerateBOQ}
+            />
+          )}
+
+          {activeTab === 'boq' && (
+            <BOQGenerationPanel
+              zones={zones}
+              onExport={handleExport}
+            />
+          )}
         </div>
+      </div>
+
+      {/* Workflow Navigation */}
+      <div className="fixed bottom-6 right-6 flex space-x-2">
+        {activeTab !== 'planning' && (
+          <button
+            onClick={() => setActiveTab('planning')}
+            className="px-4 py-2 bg-stone-600 text-white rounded-lg hover:bg-stone-700 transition-colors"
+          >
+            ← Planning
+          </button>
+        )}
+        {activeTab === 'planning' && zones.length > 0 && (
+          <button
+            onClick={handleGenerateDesign}
+            className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+          >
+            Generate Design →
+          </button>
+        )}
+        {activeTab === 'design' && (
+          <button
+            onClick={handleGenerateBOQ}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Generate BOQ →
+          </button>
+        )}
       </div>
     </div>
   );
