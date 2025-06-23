@@ -81,12 +81,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
                       weight: 2
                     }
                   },
-                  marker: {
-                    icon: L.divIcon({
-                      className: 'leaflet-div-icon leaflet-editing-icon',
-                      iconSize: [12, 12]
-                    })
-                  },
+                  marker: true,
                   polyline: false,
                   circlemarker: false
                 }}
