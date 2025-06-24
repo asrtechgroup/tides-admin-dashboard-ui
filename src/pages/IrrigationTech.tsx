@@ -1,10 +1,13 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Droplets, Settings, Target } from 'lucide-react';
 import { useIrrigationTechnologies } from '@/hooks/useIrrigationTechnologies';
 import TechnologiesTabContent from '@/components/irrigation/TechnologiesTabContent';
+import SpecificationsTabContent from '@/components/irrigation/SpecificationsTabContent';
 import EmptyTabContent from '@/components/irrigation/EmptyTabContent';
+import { TechSpecification } from '@/types/irrigation';
+import { toast } from 'sonner';
 
 const IrrigationTech = () => {
   const {
@@ -18,6 +21,68 @@ const IrrigationTech = () => {
     handleDeleteTechnology,
     handleCancelForm,
   } = useIrrigationTechnologies();
+
+  // Specifications state
+  const [specifications, setSpecifications] = useState<TechSpecification[]>([
+    {
+      parameter: 'Flow Rate',
+      value: '2.0',
+      unit: 'L/h',
+      description: 'Water flow rate per emitter',
+    },
+    {
+      parameter: 'Operating Pressure',
+      value: '1.0-2.5',
+      unit: 'bar',
+      description: 'Recommended operating pressure range',
+    },
+  ]);
+
+  const [showSpecificationForm, setShowSpecificationForm] = useState(false);
+  const [editingSpecification, setEditingSpecification] = useState<TechSpecification | undefined>();
+
+  // Specification handlers
+  const handleAddSpecification = (data: any) => {
+    const newSpecification: TechSpecification = {
+      ...data,
+    };
+    setSpecifications([...specifications, newSpecification]);
+    setShowSpecificationForm(false);
+    toast.success('Specification added successfully');
+  };
+
+  const handleEditSpecification = (specification: TechSpecification) => {
+    setEditingSpecification(specification);
+    setShowSpecificationForm(true);
+  };
+
+  const handleUpdateSpecification = (data: any) => {
+    if (editingSpecification) {
+      const index = specifications.findIndex(s => 
+        s.parameter === editingSpecification.parameter && 
+        s.value === editingSpecification.value
+      );
+      if (index !== -1) {
+        const updatedSpecs = [...specifications];
+        updatedSpecs[index] = { ...data };
+        setSpecifications(updatedSpecs);
+        setShowSpecificationForm(false);
+        setEditingSpecification(undefined);
+        toast.success('Specification updated successfully');
+      }
+    }
+  };
+
+  const handleDeleteSpecification = (id: string) => {
+    const index = parseInt(id);
+    setSpecifications(specifications.filter((_, i) => i !== index));
+    toast.success('Specification deleted successfully');
+  };
+
+  const handleCancelSpecificationForm = () => {
+    setShowSpecificationForm(false);
+    setEditingSpecification(undefined);
+  };
 
   return (
     <div className="space-y-6">
@@ -56,12 +121,15 @@ const IrrigationTech = () => {
         </TabsContent>
 
         <TabsContent value="specifications" className="space-y-4">
-          <EmptyTabContent
-            title="Technical Specifications"
-            description="Detailed technical parameters for each technology"
-            buttonText="Add Specification"
-            Icon={Settings}
-            emptyMessage='No specifications available. Click "Add Specification" to get started.'
+          <SpecificationsTabContent
+            specifications={specifications}
+            showSpecificationForm={showSpecificationForm}
+            editingSpecification={editingSpecification}
+            onShowForm={() => setShowSpecificationForm(true)}
+            onEdit={handleEditSpecification}
+            onDelete={handleDeleteSpecification}
+            onSubmit={editingSpecification ? handleUpdateSpecification : handleAddSpecification}
+            onCancel={handleCancelSpecificationForm}
           />
         </TabsContent>
 

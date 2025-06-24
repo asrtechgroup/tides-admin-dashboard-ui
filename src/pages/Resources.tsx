@@ -7,9 +7,14 @@ import { Plus, Package, Wrench, Users } from 'lucide-react';
 import { Material, Equipment, Labor } from '@/types/resources';
 import MaterialForm from '@/components/resources/MaterialForm';
 import MaterialsTable from '@/components/resources/MaterialsTable';
+import EquipmentForm from '@/components/resources/EquipmentForm';
+import EquipmentTable from '@/components/resources/EquipmentTable';
+import LaborForm from '@/components/resources/LaborForm';
+import LaborTable from '@/components/resources/LaborTable';
 import { toast } from 'sonner';
 
 const Resources = () => {
+  // Materials state
   const [materials, setMaterials] = useState<Material[]>([
     {
       id: '1',
@@ -37,9 +42,45 @@ const Resources = () => {
     },
   ]);
 
-  const [showMaterialForm, setShowMaterialForm] = useState(false);
-  const [editingMaterial, setEditingMaterial] = useState<Material | undefined>();
+  // Equipment state
+  const [equipment, setEquipment] = useState<Equipment[]>([
+    {
+      id: '1',
+      name: 'Mini Excavator',
+      type: 'excavator',
+      hourlyRate: 50000,
+      dailyRate: 350000,
+      operator: true,
+      fuelConsumption: 8.5,
+      availability: ['Dar es Salaam', 'Arusha'],
+      regionalRates: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+  ]);
 
+  // Labor state
+  const [labor, setLabor] = useState<Labor[]>([
+    {
+      id: '1',
+      skill: 'Irrigation Technician',
+      dailyRate: 25000,
+      region: 'Dar es Salaam',
+      experience: 'intermediate',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+  ]);
+
+  // Form states
+  const [showMaterialForm, setShowMaterialForm] = useState(false);
+  const [showEquipmentForm, setShowEquipmentForm] = useState(false);
+  const [showLaborForm, setShowLaborForm] = useState(false);
+  const [editingMaterial, setEditingMaterial] = useState<Material | undefined>();
+  const [editingEquipment, setEditingEquipment] = useState<Equipment | undefined>();
+  const [editingLabor, setEditingLabor] = useState<Labor | undefined>();
+
+  // Material handlers
   const handleAddMaterial = (data: any) => {
     const newMaterial: Material = {
       id: Date.now().toString(),
@@ -76,9 +117,94 @@ const Resources = () => {
     toast.success('Material deleted successfully');
   };
 
-  const handleCancelForm = () => {
+  // Equipment handlers
+  const handleAddEquipment = (data: any) => {
+    const newEquipment: Equipment = {
+      id: Date.now().toString(),
+      ...data,
+      availability: [],
+      regionalRates: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    setEquipment([...equipment, newEquipment]);
+    setShowEquipmentForm(false);
+    toast.success('Equipment added successfully');
+  };
+
+  const handleEditEquipment = (equipment: Equipment) => {
+    setEditingEquipment(equipment);
+    setShowEquipmentForm(true);
+  };
+
+  const handleUpdateEquipment = (data: any) => {
+    if (editingEquipment) {
+      setEquipment(equipment.map(e => 
+        e.id === editingEquipment.id 
+          ? { ...editingEquipment, ...data, updatedAt: new Date().toISOString() }
+          : e
+      ));
+      setShowEquipmentForm(false);
+      setEditingEquipment(undefined);
+      toast.success('Equipment updated successfully');
+    }
+  };
+
+  const handleDeleteEquipment = (id: string) => {
+    setEquipment(equipment.filter(e => e.id !== id));
+    toast.success('Equipment deleted successfully');
+  };
+
+  // Labor handlers
+  const handleAddLabor = (data: any) => {
+    const newLabor: Labor = {
+      id: Date.now().toString(),
+      ...data,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    setLabor([...labor, newLabor]);
+    setShowLaborForm(false);
+    toast.success('Labor rate added successfully');
+  };
+
+  const handleEditLabor = (labor: Labor) => {
+    setEditingLabor(labor);
+    setShowLaborForm(true);
+  };
+
+  const handleUpdateLabor = (data: any) => {
+    if (editingLabor) {
+      setLabor(labor.map(l => 
+        l.id === editingLabor.id 
+          ? { ...editingLabor, ...data, updatedAt: new Date().toISOString() }
+          : l
+      ));
+      setShowLaborForm(false);
+      setEditingLabor(undefined);
+      toast.success('Labor rate updated successfully');
+    }
+  };
+
+  const handleDeleteLabor = (id: string) => {
+    setLabor(labor.filter(l => l.id !== id));
+    toast.success('Labor rate deleted successfully');
+  };
+
+  // Cancel handlers
+  const handleCancelMaterialForm = () => {
     setShowMaterialForm(false);
     setEditingMaterial(undefined);
+  };
+
+  const handleCancelEquipmentForm = () => {
+    setShowEquipmentForm(false);
+    setEditingEquipment(undefined);
+  };
+
+  const handleCancelLaborForm = () => {
+    setShowLaborForm(false);
+    setEditingLabor(undefined);
   };
 
   return (
@@ -109,7 +235,7 @@ const Resources = () => {
             <MaterialForm
               material={editingMaterial}
               onSubmit={editingMaterial ? handleUpdateMaterial : handleAddMaterial}
-              onCancel={handleCancelForm}
+              onCancel={handleCancelMaterialForm}
             />
           ) : (
             <>
@@ -134,49 +260,61 @@ const Resources = () => {
         </TabsContent>
 
         <TabsContent value="equipment" className="space-y-4">
-          <Card>
-            <CardHeader>
+          {showEquipmentForm ? (
+            <EquipmentForm
+              equipment={editingEquipment}
+              onSubmit={editingEquipment ? handleUpdateEquipment : handleAddEquipment}
+              onCancel={handleCancelEquipmentForm}
+            />
+          ) : (
+            <>
               <div className="flex justify-between items-center">
                 <div>
-                  <CardTitle>Equipment Rates</CardTitle>
-                  <p className="text-stone-600 mt-1">Manage construction equipment and rental rates</p>
+                  <h2 className="text-xl font-semibold">Equipment Rates</h2>
+                  <p className="text-stone-600">Manage construction equipment and rental rates</p>
                 </div>
-                <Button>
+                <Button onClick={() => setShowEquipmentForm(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Add Equipment
                 </Button>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-stone-500">
-                <Wrench className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No equipment data available. Click "Add Equipment" to get started.</p>
-              </div>
-            </CardContent>
-          </Card>
+
+              <EquipmentTable
+                equipment={equipment}
+                onEdit={handleEditEquipment}
+                onDelete={handleDeleteEquipment}
+              />
+            </>
+          )}
         </TabsContent>
 
         <TabsContent value="labor" className="space-y-4">
-          <Card>
-            <CardHeader>
+          {showLaborForm ? (
+            <LaborForm
+              labor={editingLabor}
+              onSubmit={editingLabor ? handleUpdateLabor : handleAddLabor}
+              onCancel={handleCancelLaborForm}
+            />
+          ) : (
+            <>
               <div className="flex justify-between items-center">
                 <div>
-                  <CardTitle>Labor Costs</CardTitle>
-                  <p className="text-stone-600 mt-1">Manage labor rates by skill and region</p>
+                  <h2 className="text-xl font-semibold">Labor Costs</h2>
+                  <p className="text-stone-600">Manage labor rates by skill and region</p>
                 </div>
-                <Button>
+                <Button onClick={() => setShowLaborForm(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Add Labor Rate
                 </Button>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-stone-500">
-                <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No labor data available. Click "Add Labor Rate" to get started.</p>
-              </div>
-            </CardContent>
-          </Card>
+
+              <LaborTable
+                labor={labor}
+                onEdit={handleEditLabor}
+                onDelete={handleDeleteLabor}
+              />
+            </>
+          )}
         </TabsContent>
       </Tabs>
     </div>
