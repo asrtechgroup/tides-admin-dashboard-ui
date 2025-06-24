@@ -24,7 +24,8 @@ import {
   MapPin,
   Users,
   Download,
-  Upload
+  Upload,
+  CheckCircle
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -32,11 +33,11 @@ const Settings = () => {
   const { toast } = useToast();
   const [settings, setSettings] = useState({
     // General Settings
-    systemName: 'TIDES Admin Dashboard',
-    timezone: 'UTC+0',
+    systemName: 'TIDES Tanzania Admin Dashboard',
+    timezone: 'UTC+3',
     language: 'en',
     dateFormat: 'DD/MM/YYYY',
-    currency: 'USD',
+    currency: 'TZS',
     
     // User Preferences
     theme: 'light',
@@ -46,12 +47,12 @@ const Settings = () => {
     autoSave: true,
     
     // System Configuration
-    maxProjectsPerUser: 10,
-    sessionTimeout: 30,
-    fileUploadLimit: 50,
+    maxProjectsPerUser: 15,
+    sessionTimeout: 45,
+    fileUploadLimit: 100,
     
     // Regional Settings
-    defaultCountry: 'US',
+    defaultCountry: 'TZ',
     defaultLanguage: 'English',
     measurementUnit: 'metric',
     
@@ -61,6 +62,8 @@ const Settings = () => {
     loginAttempts: 5
   });
 
+  const [isSaving, setIsSaving] = useState(false);
+
   const handleSettingChange = (key: string, value: any) => {
     setSettings(prev => ({
       ...prev,
@@ -68,17 +71,42 @@ const Settings = () => {
     }));
   };
 
-  const handleSaveSettings = () => {
-    console.log('Saving settings:', settings);
-    toast({
-      title: "Settings Saved",
-      description: "Your settings have been updated successfully.",
-    });
+  const handleSaveSettings = async () => {
+    setIsSaving(true);
+    
+    // Simulate API call
+    setTimeout(() => {
+      setIsSaving(false);
+      toast({
+        title: "Settings Saved",
+        description: "Your settings have been updated successfully.",
+      });
+    }, 2000);
   };
 
   const handleResetSettings = () => {
-    // Reset to default values
-    console.log('Resetting settings to default');
+    setSettings({
+      systemName: 'TIDES Tanzania Admin Dashboard',
+      timezone: 'UTC+3',
+      language: 'en',
+      dateFormat: 'DD/MM/YYYY',
+      currency: 'TZS',
+      theme: 'light',
+      emailNotifications: true,
+      pushNotifications: false,
+      dataBackup: true,
+      autoSave: true,
+      maxProjectsPerUser: 15,
+      sessionTimeout: 45,
+      fileUploadLimit: 100,
+      defaultCountry: 'TZ',
+      defaultLanguage: 'English',
+      measurementUnit: 'metric',
+      twoFactorAuth: false,
+      passwordExpiry: 90,
+      loginAttempts: 5
+    });
+    
     toast({
       title: "Settings Reset",
       description: "All settings have been reset to default values.",
@@ -86,7 +114,15 @@ const Settings = () => {
   };
 
   const handleExportSettings = () => {
-    console.log('Exporting settings');
+    const settingsData = JSON.stringify(settings, null, 2);
+    const blob = new Blob([settingsData], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'tides-settings.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    
     toast({
       title: "Settings Exported",
       description: "Settings configuration has been exported successfully.",
@@ -94,18 +130,40 @@ const Settings = () => {
   };
 
   const handleImportSettings = () => {
-    console.log('Importing settings');
-    toast({
-      title: "Settings Imported",
-      description: "Settings configuration has been imported successfully.",
-    });
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const importedSettings = JSON.parse(e.target?.result as string);
+            setSettings({ ...settings, ...importedSettings });
+            toast({
+              title: "Settings Imported",
+              description: "Settings configuration has been imported successfully.",
+            });
+          } catch (error) {
+            toast({
+              title: "Import Error",
+              description: "Failed to import settings. Please check the file format.",
+              variant: "destructive"
+            });
+          }
+        };
+        reader.readAsText(file);
+      }
+    };
+    input.click();
   };
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-stone-800">Settings</h1>
-        <p className="text-stone-600 mt-1">Configure system settings and preferences</p>
+        <p className="text-stone-600 mt-1">Configure system settings and preferences for Tanzania operations</p>
       </div>
 
       <Tabs defaultValue="general" className="space-y-6">
@@ -142,10 +200,10 @@ const Settings = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="UTC+3">UTC+3 (East Africa Time - Tanzania)</SelectItem>
                       <SelectItem value="UTC+0">UTC+0 (GMT)</SelectItem>
                       <SelectItem value="UTC+1">UTC+1 (CET)</SelectItem>
                       <SelectItem value="UTC-5">UTC-5 (EST)</SelectItem>
-                      <SelectItem value="UTC-8">UTC-8 (PST)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -157,9 +215,9 @@ const Settings = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="en">English</SelectItem>
-                      <SelectItem value="es">Español</SelectItem>
+                      <SelectItem value="sw">Kiswahili</SelectItem>
                       <SelectItem value="fr">Français</SelectItem>
-                      <SelectItem value="de">Deutsch</SelectItem>
+                      <SelectItem value="ar">العربية</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -170,10 +228,10 @@ const Settings = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="TZS">TZS (Tanzanian Shilling)</SelectItem>
                       <SelectItem value="USD">USD ($)</SelectItem>
                       <SelectItem value="EUR">EUR (€)</SelectItem>
-                      <SelectItem value="GBP">GBP (£)</SelectItem>
-                      <SelectItem value="JPY">JPY (¥)</SelectItem>
+                      <SelectItem value="KES">KES (Kenyan Shilling)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -370,7 +428,7 @@ const Settings = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Globe className="w-5 h-5" />
-                Regional Settings
+                Regional Settings (Tanzania)
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -382,11 +440,11 @@ const Settings = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="US">United States</SelectItem>
-                      <SelectItem value="CA">Canada</SelectItem>
-                      <SelectItem value="UK">United Kingdom</SelectItem>
-                      <SelectItem value="AU">Australia</SelectItem>
-                      <SelectItem value="DE">Germany</SelectItem>
+                      <SelectItem value="TZ">Tanzania</SelectItem>
+                      <SelectItem value="KE">Kenya</SelectItem>
+                      <SelectItem value="UG">Uganda</SelectItem>
+                      <SelectItem value="RW">Rwanda</SelectItem>
+                      <SelectItem value="BI">Burundi</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -401,6 +459,16 @@ const Settings = () => {
                       <SelectItem value="imperial">Imperial (ft, lb, gal)</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+              </div>
+              
+              <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                <h5 className="font-medium text-blue-900 mb-2">Tanzania Regional Information</h5>
+                <div className="grid grid-cols-2 gap-2 text-sm text-blue-800">
+                  <div>Capital: Dodoma</div>
+                  <div>Largest City: Dar es Salaam</div>
+                  <div>Currency: Tanzanian Shilling (TZS)</div>
+                  <div>Time Zone: EAT (UTC+3)</div>
                 </div>
               </div>
             </CardContent>
@@ -425,9 +493,22 @@ const Settings = () => {
             <RefreshCw className="w-4 h-4" />
             Reset to Default
           </Button>
-          <Button onClick={handleSaveSettings} className="flex items-center gap-2">
-            <Save className="w-4 h-4" />
-            Save Settings
+          <Button 
+            onClick={handleSaveSettings} 
+            disabled={isSaving}
+            className="flex items-center gap-2"
+          >
+            {isSaving ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4" />
+                Save Settings
+              </>
+            )}
           </Button>
         </div>
       </div>

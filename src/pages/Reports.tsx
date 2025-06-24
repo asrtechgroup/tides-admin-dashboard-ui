@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Download, 
   FileText, 
@@ -17,19 +18,23 @@ import {
   DollarSign,
   Users,
   Map,
-  Eye
+  Eye,
+  CheckCircle
 } from 'lucide-react';
 
 const Reports = () => {
+  const { toast } = useToast();
   const [selectedProject, setSelectedProject] = useState('');
   const [dateRange, setDateRange] = useState('');
   const [reportType, setReportType] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
 
-  // Mock data for reports
+  // Mock data for projects
   const projects = [
-    { id: '1', name: 'Drip Irrigation System - Farm A', status: 'completed' },
-    { id: '2', name: 'Sprinkler System - Farm B', status: 'in-progress' },
-    { id: '3', name: 'Smart Irrigation - Farm C', status: 'completed' },
+    { id: '1', name: 'Drip Irrigation System - Mbeya Farm', status: 'completed' },
+    { id: '2', name: 'Sprinkler System - Arusha Agricultural Center', status: 'in-progress' },
+    { id: '3', name: 'Smart Irrigation - Dodoma Cooperative', status: 'completed' },
+    { id: '4', name: 'Canal System - Iringa Valley', status: 'planning' },
   ];
 
   const reportTemplates = [
@@ -43,7 +48,7 @@ const Reports = () => {
     {
       id: 'cost-analysis',
       title: 'Cost Analysis Report',
-      description: 'Detailed breakdown of project costs and budget variance',
+      description: 'Detailed breakdown of project costs and budget variance in TZS',
       icon: DollarSign,
       category: 'Financial Reports'
     },
@@ -80,40 +85,109 @@ const Reports = () => {
   const recentReports = [
     {
       id: '1',
-      name: 'Monthly Cost Analysis - October 2024',
+      name: 'Monthly Cost Analysis - December 2024',
       type: 'Cost Analysis',
-      generated: '2024-11-01',
+      generated: '2024-12-01',
       size: '2.4 MB',
-      format: 'PDF'
+      format: 'PDF',
+      downloadUrl: '#'
     },
     {
       id: '2',
-      name: 'Project Summary - Farm A Completion',
+      name: 'Project Summary - Mbeya Farm Completion',
       type: 'Project Summary',
-      generated: '2024-10-28',
+      generated: '2024-11-28',
       size: '1.8 MB',
-      format: 'Excel'
+      format: 'Excel',
+      downloadUrl: '#'
     },
     {
       id: '3',
-      name: 'Resource Utilization Q3 2024',
+      name: 'Resource Utilization Q4 2024',
       type: 'Resource Analysis',
-      generated: '2024-10-15',
+      generated: '2024-11-15',
       size: '3.1 MB',
-      format: 'PDF'
+      format: 'PDF',
+      downloadUrl: '#'
     }
   ];
 
-  const handleGenerateReport = () => {
-    console.log('Generating report:', { selectedProject, dateRange, reportType });
-    // Mock report generation
-    alert('Report generation started! You will be notified when it\'s ready for download.');
+  const handleGenerateReport = async () => {
+    if (!selectedProject || !reportType || !dateRange) {
+      toast({
+        title: "Missing Information",
+        description: "Please select project, report type, and date range.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+    
+    // Simulate report generation
+    setTimeout(() => {
+      setIsGenerating(false);
+      toast({
+        title: "Report Generated Successfully",
+        description: "Your report has been generated and is ready for download.",
+      });
+      
+      // Add to recent reports
+      const newReport = {
+        id: Date.now().toString(),
+        name: `${reportTemplates.find(t => t.id === reportType)?.title} - ${new Date().toLocaleDateString()}`,
+        type: reportTemplates.find(t => t.id === reportType)?.title || 'Report',
+        generated: new Date().toISOString().split('T')[0],
+        size: '2.1 MB',
+        format: 'PDF',
+        downloadUrl: '#'
+      };
+    }, 3000);
   };
 
   const handleExport = (format: string) => {
-    console.log('Exporting in format:', format);
-    // Mock export functionality
-    alert(`Exporting report in ${format} format...`);
+    toast({
+      title: `Exporting ${format}`,
+      description: `Your report is being exported in ${format} format...`,
+    });
+    
+    // Simulate file download
+    setTimeout(() => {
+      toast({
+        title: "Export Complete",
+        description: `Report has been exported successfully in ${format} format.`,
+      });
+    }, 2000);
+  };
+
+  const handleDownload = (report: any) => {
+    toast({
+      title: "Downloading Report",
+      description: `Downloading ${report.name}...`,
+    });
+    
+    // Simulate download
+    setTimeout(() => {
+      toast({
+        title: "Download Complete",
+        description: "Report has been downloaded successfully.",
+      });
+    }, 1500);
+  };
+
+  const handlePreviewTemplate = (template: any) => {
+    toast({
+      title: "Template Preview",
+      description: `Opening preview for ${template.title}...`,
+    });
+  };
+
+  const handleUseTemplate = (template: any) => {
+    setReportType(template.id);
+    toast({
+      title: "Template Selected",
+      description: `${template.title} template has been selected for generation.`,
+    });
   };
 
   return (
@@ -192,9 +266,22 @@ const Reports = () => {
               </div>
 
               <div className="flex gap-2 pt-4">
-                <Button onClick={handleGenerateReport} className="flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4" />
-                  Generate Report
+                <Button 
+                  onClick={handleGenerateReport} 
+                  disabled={isGenerating}
+                  className="flex items-center gap-2"
+                >
+                  {isGenerating ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <BarChart3 className="w-4 h-4" />
+                      Generate Report
+                    </>
+                  )}
                 </Button>
                 <Button variant="outline" onClick={() => handleExport('PDF')} className="flex items-center gap-2">
                   <Download className="w-4 h-4" />
@@ -203,6 +290,10 @@ const Reports = () => {
                 <Button variant="outline" onClick={() => handleExport('Excel')} className="flex items-center gap-2">
                   <Download className="w-4 h-4" />
                   Export Excel
+                </Button>
+                <Button variant="outline" onClick={() => handleExport('CSV')} className="flex items-center gap-2">
+                  <Download className="w-4 h-4" />
+                  Export CSV
                 </Button>
               </div>
             </CardContent>
@@ -228,12 +319,21 @@ const Reports = () => {
                   <CardContent>
                     <p className="text-stone-600 text-sm mb-4">{template.description}</p>
                     <div className="flex gap-2">
-                      <Button size="sm" className="flex items-center gap-1">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handlePreviewTemplate(template)}
+                        className="flex items-center gap-1"
+                      >
                         <Eye className="w-3 h-3" />
                         Preview
                       </Button>
-                      <Button size="sm" variant="outline" className="flex items-center gap-1">
-                        <Download className="w-3 h-3" />
+                      <Button 
+                        size="sm" 
+                        onClick={() => handleUseTemplate(template)}
+                        className="flex items-center gap-1"
+                      >
+                        <CheckCircle className="w-3 h-3" />
                         Use Template
                       </Button>
                     </div>
@@ -256,7 +356,7 @@ const Reports = () => {
             <CardContent>
               <div className="space-y-4">
                 {recentReports.map((report) => (
-                  <div key={report.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div key={report.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
                     <div className="flex items-center gap-4">
                       <FileText className="w-8 h-8 text-emerald-600" />
                       <div>
@@ -268,7 +368,12 @@ const Reports = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge variant="outline">{report.format}</Badge>
-                      <Button size="sm" variant="outline" className="flex items-center gap-1">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => handleDownload(report)}
+                        className="flex items-center gap-1"
+                      >
                         <Download className="w-3 h-3" />
                         Download
                       </Button>
