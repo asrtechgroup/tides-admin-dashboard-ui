@@ -18,38 +18,15 @@ interface BOQSubmissionStepProps {
 }
 
 const BOQSubmissionStep: React.FC<BOQSubmissionStepProps> = ({ data, onUpdate, onSubmit }) => {
-  // Mock BOQ data
-  const mockBOQItems: BOQItem[] = [
-    {
-      id: '1',
-      category: 'Equipment',
-      description: 'Drip irrigation pipes',
-      quantity: 1000,
-      unit: 'meters',
-      rate: 25,
-      amount: 25000
-    },
-    {
-      id: '2',
-      category: 'Labor',
-      description: 'Installation labor',
-      quantity: 20,
-      unit: 'days',
-      rate: 500,
-      amount: 10000
-    },
-    {
-      id: '3',
-      category: 'Equipment',
-      description: 'Control valves',
-      quantity: 10,
-      unit: 'pieces',
-      rate: 1200,
-      amount: 12000
-    }
-  ];
+  const totalAmount = data.boqItems.reduce((sum, item) => sum + item.amount, 0);
 
-  const totalAmount = mockBOQItems.reduce((sum, item) => sum + item.amount, 0);
+  const groupedItems = data.boqItems.reduce((acc, item) => {
+    if (!acc[item.category]) {
+      acc[item.category] = [];
+    }
+    acc[item.category].push(item);
+    return acc;
+  }, {} as Record<string, BOQItem[]>);
 
   return (
     <div className="space-y-6">
@@ -59,44 +36,65 @@ const BOQSubmissionStep: React.FC<BOQSubmissionStepProps> = ({ data, onUpdate, o
           <CardDescription>Review project costs and submit for approval</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Quantity</TableHead>
-                  <TableHead>Unit</TableHead>
-                  <TableHead>Rate</TableHead>
-                  <TableHead>Amount</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {mockBOQItems.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell>{item.category}</TableCell>
-                    <TableCell>{item.description}</TableCell>
-                    <TableCell>{item.quantity}</TableCell>
-                    <TableCell>{item.unit}</TableCell>
-                    <TableCell>₹{item.rate}</TableCell>
-                    <TableCell>₹{item.amount.toLocaleString()}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            
-            <div className="flex justify-end">
-              <Card className="w-64">
-                <CardContent className="pt-4">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">Total Cost:</span>
-                    <span className="text-xl font-bold text-emerald-600">
-                      ₹{totalAmount.toLocaleString()}
-                    </span>
+          <div className="space-y-6">
+            {data.boqItems.length > 0 ? (
+              <>
+                {Object.entries(groupedItems).map(([category, items]) => (
+                  <div key={category} className="space-y-2">
+                    <h3 className="text-lg font-semibold capitalize bg-stone-100 px-3 py-2 rounded">
+                      {category}
+                    </h3>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Description</TableHead>
+                          <TableHead>Quantity</TableHead>
+                          <TableHead>Unit</TableHead>
+                          <TableHead>Rate (TSh)</TableHead>
+                          <TableHead>Amount (TSh)</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {items.map((item) => (
+                          <TableRow key={item.id}>
+                            <TableCell>{item.description}</TableCell>
+                            <TableCell>{item.quantity}</TableCell>
+                            <TableCell>{item.unit}</TableCell>
+                            <TableCell>{item.rate.toLocaleString()}</TableCell>
+                            <TableCell>{item.amount.toLocaleString()}</TableCell>
+                          </TableRow>
+                        ))}
+                        <TableRow className="bg-stone-50">
+                          <TableCell colSpan={4} className="font-medium">
+                            {category} Subtotal:
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            TSh {items.reduce((sum, item) => sum + item.amount, 0).toLocaleString()}
+                          </TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
+                ))}
+                
+                <div className="flex justify-end">
+                  <Card className="w-64">
+                    <CardContent className="pt-4">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">Total Project Cost:</span>
+                        <span className="text-xl font-bold text-emerald-600">
+                          TSh {totalAmount.toLocaleString()}
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-8 text-stone-500">
+                <p>No resources have been selected. Please go back to the Resources & Materials step to add project requirements.</p>
+              </div>
+            )}
             
             <div className="space-y-2">
               <Label htmlFor="comments">Comments (Optional)</Label>
@@ -110,7 +108,12 @@ const BOQSubmissionStep: React.FC<BOQSubmissionStepProps> = ({ data, onUpdate, o
             </div>
             
             <div className="flex justify-center pt-6">
-              <Button onClick={onSubmit} size="lg" className="px-8">
+              <Button 
+                onClick={onSubmit} 
+                size="lg" 
+                className="px-8"
+                disabled={data.boqItems.length === 0}
+              >
                 <Send className="w-4 h-4 mr-2" />
                 Submit Project for Approval
               </Button>

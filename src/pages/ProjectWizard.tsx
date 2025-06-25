@@ -9,7 +9,9 @@ import { useToast } from '@/hooks/use-toast';
 import { ProjectWizardData, WIZARD_STEPS } from '@/types/project-wizard';
 import ProjectInfoStep from '@/components/project-wizard/ProjectInfoStep';
 import CropCalendarStep from '@/components/project-wizard/CropCalendarStep';
+import TechnologySelectionStep from '@/components/project-wizard/TechnologySelectionStep';
 import SchemeDesignStep from '@/components/project-wizard/SchemeDesignStep';
+import ResourcesSelectionStep from '@/components/project-wizard/ResourcesSelectionStep';
 import BOQSubmissionStep from '@/components/project-wizard/BOQSubmissionStep';
 
 const ProjectWizard = () => {
@@ -32,8 +34,15 @@ const ProjectWizard = () => {
       cropVarieties: []
     },
     cropCalendar: [],
+    technologySelection: {
+      technologyType: '',
+      irrigationType: '',
+      efficiency: 0,
+      specifications: ''
+    },
     cropWaterRequirements: [],
     hydraulicDesign: { designParameters: {} },
+    resourceSelection: [],
     boqItems: [],
     status: 'draft'
   });
@@ -122,6 +131,13 @@ const ProjectWizard = () => {
         );
       case 2:
         return (
+          <TechnologySelectionStep
+            data={projectData.technologySelection}
+            onUpdate={(technologySelection) => updateProjectData({ technologySelection })}
+          />
+        );
+      case 3:
+        return (
           <SchemeDesignStep
             data={{
               cropWaterRequirements: projectData.cropWaterRequirements,
@@ -130,11 +146,26 @@ const ProjectWizard = () => {
             onUpdate={(data) => updateProjectData(data)}
           />
         );
-      case 3:
+      case 4:
+        return (
+          <ResourcesSelectionStep
+            data={projectData.resourceSelection}
+            onUpdate={(resourceSelection) => updateProjectData({ resourceSelection })}
+          />
+        );
+      case 5:
         return (
           <BOQSubmissionStep
             data={{
-              boqItems: projectData.boqItems,
+              boqItems: projectData.resourceSelection.map(item => ({
+                id: item.id,
+                category: item.category,
+                description: `${item.name} - ${item.description}`,
+                quantity: item.quantity,
+                unit: item.unit,
+                rate: item.rate,
+                amount: item.amount
+              })),
               comments: projectData.comments
             }}
             onUpdate={(data) => updateProjectData(data)}

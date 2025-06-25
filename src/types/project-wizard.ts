@@ -21,6 +21,25 @@ export interface CropCalendarEntry {
   potentialArea: number;
 }
 
+export interface TechnologySelection {
+  technologyType: 'surface' | 'subsurface' | 'pressurized' | '';
+  irrigationType: string;
+  efficiency: number;
+  specifications: string;
+}
+
+export interface ResourceItem {
+  id: string;
+  category: 'materials' | 'labor' | 'equipment';
+  itemId: string;
+  name: string;
+  description: string;
+  quantity: number;
+  unit: string;
+  rate: number;
+  amount: number;
+}
+
 export interface CropWaterRequirement {
   cropName: string;
   waterRequirement: number;
@@ -47,8 +66,10 @@ export interface ProjectWizardData {
   step: number;
   projectInfo: ProjectInfo;
   cropCalendar: CropCalendarEntry[];
+  technologySelection: TechnologySelection;
   cropWaterRequirements: CropWaterRequirement[];
   hydraulicDesign: HydraulicDesign;
+  resourceSelection: ResourceItem[];
   boqItems: BOQItem[];
   comments?: string;
   status: 'draft' | 'submitted' | 'approved';
@@ -59,7 +80,9 @@ export interface ProjectWizardData {
 export const WIZARD_STEPS = [
   'Project Info & Upload',
   'Crop Calendar',
+  'Technology Selection',
   'Scheme Design',
+  'Resources & Materials',
   'BOQ & Submission'
 ];
 
@@ -249,3 +272,18 @@ export const CROP_VARIETIES = [
   'Vegetables',
   'Fruits'
 ];
+
+export const TECHNOLOGY_TYPES = {
+  surface: {
+    name: 'Surface Irrigation',
+    irrigationTypes: ['Basin Irrigation', 'Border Irrigation', 'Furrow Irrigation', 'Check Basin']
+  },
+  subsurface: {
+    name: 'Subsurface Irrigation',
+    irrigationTypes: ['Subsurface Drip', 'Clay Pot Irrigation', 'Wicking Systems']
+  },
+  pressurized: {
+    name: 'Pressurized Irrigation',
+    irrigationTypes: ['Drip Irrigation', 'Micro-sprinkler', 'Sprinkler Systems', 'Center Pivot']
+  }
+};
