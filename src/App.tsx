@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,6 +18,7 @@ import Settings from "@/pages/Settings";
 import Login from "@/pages/Login";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
+import ActivityLogs from "@/pages/ActivityLogs";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +38,7 @@ const App = () => (
             }>
               <Route index element={<Dashboard />} />
               <Route path="users" element={<UserManagement />} />
+              <Route path="activity-logs" element={<ActivityLogs />} />
               <Route path="projects" element={<Projects />} />
               <Route path="project-wizard/:projectId?" element={<ProjectWizard />} />
               <Route path="boq-builder" element={<BOQBuilder />} />

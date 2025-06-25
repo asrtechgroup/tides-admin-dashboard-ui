@@ -2,6 +2,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   Calendar, 
   Users, 
@@ -12,7 +13,8 @@ import {
   Droplets,
   TrendingUp,
   FolderOpen,
-  BarChart3
+  BarChart3,
+  Activity
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -20,20 +22,45 @@ interface SidebarProps {
   onToggle: () => void;
 }
 
-const menuItems = [
-  { icon: TrendingUp, label: 'Dashboard', path: '/' },
-  { icon: Users, label: 'User Management', path: '/users' },
-  { icon: FolderOpen, label: 'Projects & Schemes', path: '/projects' },
-  { icon: FileText, label: 'BOQ Builder', path: '/boq-builder' },
-  { icon: Droplets, label: 'Irrigation Technologies', path: '/irrigation-tech' },
-  { icon: Map, label: 'GIS Planning', path: '/gis-planning' },
-  { icon: Database, label: 'Resources & Cost Database', path: '/resources' },
-  { icon: BarChart3, label: 'Reports & Exports', path: '/reports' },
-  { icon: Settings, label: 'Settings', path: '/settings' },
+interface MenuItem {
+  icon: any;
+  label: string;
+  path: string;
+  permission: string;
+}
+
+const allMenuItems: MenuItem[] = [
+  { icon: TrendingUp, label: 'Dashboard', path: '/', permission: 'dashboard_admin' },
+  { icon: Users, label: 'User Management', path: '/users', permission: 'user_management' },
+  { icon: Activity, label: 'Activity Logs', path: '/activity-logs', permission: 'activity_logs' },
+  { icon: FolderOpen, label: 'Projects & Schemes', path: '/projects', permission: 'view_projects' },
+  { icon: Calendar, label: 'Project Wizard', path: '/project-wizard', permission: 'project_wizard' },
+  { icon: FileText, label: 'BOQ Builder', path: '/boq-builder', permission: 'boq_builder' },
+  { icon: Droplets, label: 'Irrigation Technologies', path: '/irrigation-tech', permission: 'irrigation_tech' },
+  { icon: Map, label: 'GIS Planning', path: '/gis-planning', permission: 'gis_planning' },
+  { icon: Database, label: 'Resources & Cost Database', path: '/resources', permission: 'manage_technical_aspects' },
+  { icon: BarChart3, label: 'Reports & Exports', path: '/reports', permission: 'reports' },
+  { icon: Settings, label: 'Settings', path: '/settings', permission: 'basic_settings' },
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
   const location = useLocation();
+  const { user, hasPermission } = useAuth();
+
+  // Filter menu items based on user permissions
+  const menuItems = allMenuItems.filter(item => hasPermission(item.permission));
+
+  // Adjust dashboard permission based on role
+  const dashboardItem = menuItems.find(item => item.path === '/');
+  if (dashboardItem && user) {
+    if (user.role === 'Engineer') {
+      dashboardItem.permission = 'dashboard_engineer';
+    } else if (user.role === 'Planner') {
+      dashboardItem.permission = 'dashboard_planner';
+    } else if (user.role === 'Viewer') {
+      dashboardItem.permission = 'dashboard_viewer';
+    }
+  }
 
   return (
     <div
@@ -51,7 +78,9 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
           {!collapsed && (
             <div>
               <h1 className="text-xl font-bold">TIDES</h1>
-              <p className="text-xs text-emerald-200">Admin Dashboard</p>
+              <p className="text-xs text-emerald-200">
+                {user?.role} Dashboard
+              </p>
             </div>
           )}
         </div>
