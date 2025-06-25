@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,8 +27,18 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import SettingsSelector from '@/components/settings/SettingsSelector';
 
 const Settings = () => {
+  const { user } = useAuth();
+  
+  // If not an admin, use the settings selector
+  if (user?.role !== 'Admin') {
+    return <SettingsSelector />;
+  }
+
+  // Admin-specific settings (keep all existing admin settings code)
   const { toast } = useToast();
   const [settings, setSettings] = useState({
     // General Settings

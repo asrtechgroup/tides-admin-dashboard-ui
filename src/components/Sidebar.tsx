@@ -48,7 +48,13 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
   const { user, hasPermission } = useAuth();
 
   // Filter menu items based on user permissions
-  const menuItems = allMenuItems.filter(item => hasPermission(item.permission));
+  const menuItems = allMenuItems.filter(item => {
+    // Special handling for settings - show for all roles but with different permissions
+    if (item.path === '/settings') {
+      return hasPermission('basic_settings') || hasPermission('full_settings');
+    }
+    return hasPermission(item.permission);
+  });
 
   // Adjust dashboard permission based on role
   const dashboardItem = menuItems.find(item => item.path === '/');
