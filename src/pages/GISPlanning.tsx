@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Zone, ZoneFormData } from '@/types/gis';
@@ -11,6 +10,7 @@ import DrawingToolsPanel from '@/components/gis/DrawingToolsPanel';
 import PageHeader from '@/components/gis/PageHeader';
 import SchemeDesignPanel from '@/components/gis/SchemeDesignPanel';
 import BOQGenerationPanel from '@/components/gis/BOQGenerationPanel';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 // Fix for default markers in React Leaflet
 import L from 'leaflet';
@@ -127,10 +127,20 @@ const GISPlanning = () => {
   };
 
   const handleUpload = () => {
-    toast({
-      title: "Upload Feature",
-      description: "Shapefile upload functionality would be implemented here.",
-    });
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.zip,.shp,.dbf,.shx';
+    input.onchange = (e: any) => {
+      const file = e.target.files[0];
+      if (file) {
+        toast({
+          title: 'Shapefile Selected',
+          description: `File: ${file.name}`,
+        });
+        // TODO: handle file upload logic here
+      }
+    };
+    input.click();
   };
 
   const handleGenerateDesign = () => {
@@ -168,83 +178,86 @@ const GISPlanning = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <PageHeader onUpload={handleUpload} onExport={handleExport} />
+    <ErrorBoundary>
+      <div className="space-y-6">
+        <PageHeader onUpload={handleUpload} onExport={handleExport} />
+        <div id="toast-root" className="fixed top-6 right-6 z-[100] pointer-events-none" />
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <MapComponent
-          activeLayer={activeLayer}
-          setActiveLayer={setActiveLayer}
-          onCreated={onCreated}
-        />
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <MapComponent
+            activeLayer={activeLayer}
+            setActiveLayer={setActiveLayer}
+            onCreated={onCreated}
+          />
 
-        <div className="space-y-6">
-          {activeTab === 'planning' && (
-            <>
-              <DrawingToolsPanel />
-              
-              <ZonePropertiesPanel
-                selectedZone={selectedZone}
-                isEditing={isEditing}
-                formData={formData}
-                setFormData={setFormData}
-                setIsEditing={setIsEditing}
-                onSaveZone={handleSaveZone}
-              />
+          <div className="space-y-6">
+            {activeTab === 'planning' && (
+              <>
+                <DrawingToolsPanel />
+                
+                <ZonePropertiesPanel
+                  selectedZone={selectedZone}
+                  isEditing={isEditing}
+                  formData={formData}
+                  setFormData={setFormData}
+                  setIsEditing={setIsEditing}
+                  onSaveZone={handleSaveZone}
+                />
 
-              <ZonesList
+                <ZonesList
+                  zones={zones}
+                  selectedZone={selectedZone}
+                  onZoneSelect={handleZoneSelect}
+                  onDeleteZone={handleDeleteZone}
+                />
+              </>
+            )}
+
+            {activeTab === 'design' && (
+              <SchemeDesignPanel
                 zones={zones}
-                selectedZone={selectedZone}
-                onZoneSelect={handleZoneSelect}
-                onDeleteZone={handleDeleteZone}
+                onGenerateBOQ={handleGenerateBOQ}
               />
-            </>
-          )}
+            )}
 
+            {activeTab === 'boq' && (
+              <BOQGenerationPanel
+                zones={zones}
+                onExport={handleExport}
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Workflow Navigation */}
+        <div className="fixed bottom-6 right-6 flex space-x-2">
+          {activeTab !== 'planning' && (
+            <button
+              onClick={() => setActiveTab('planning')}
+              className="px-4 py-2 bg-stone-600 text-white rounded-lg hover:bg-stone-700 transition-colors"
+            >
+              ← Planning
+            </button>
+          )}
+          {activeTab === 'planning' && zones.length > 0 && (
+            <button
+              onClick={handleGenerateDesign}
+              className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+            >
+              Generate Design →
+            </button>
+          )}
           {activeTab === 'design' && (
-            <SchemeDesignPanel
-              zones={zones}
-              onGenerateBOQ={handleGenerateBOQ}
-            />
-          )}
-
-          {activeTab === 'boq' && (
-            <BOQGenerationPanel
-              zones={zones}
-              onExport={handleExport}
-            />
+            <button
+              onClick={handleGenerateBOQ}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Generate BOQ →
+            </button>
           )}
         </div>
       </div>
-
-      {/* Workflow Navigation */}
-      <div className="fixed bottom-6 right-6 flex space-x-2">
-        {activeTab !== 'planning' && (
-          <button
-            onClick={() => setActiveTab('planning')}
-            className="px-4 py-2 bg-stone-600 text-white rounded-lg hover:bg-stone-700 transition-colors"
-          >
-            ← Planning
-          </button>
-        )}
-        {activeTab === 'planning' && zones.length > 0 && (
-          <button
-            onClick={handleGenerateDesign}
-            className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
-          >
-            Generate Design →
-          </button>
-        )}
-        {activeTab === 'design' && (
-          <button
-            onClick={handleGenerateBOQ}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Generate BOQ →
-          </button>
-        )}
-      </div>
-    </div>
+    </ErrorBoundary>
   );
 };
 

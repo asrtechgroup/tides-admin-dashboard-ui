@@ -1,4 +1,3 @@
-
 import React, { useRef } from 'react';
 import { MapContainer, TileLayer, FeatureGroup } from 'react-leaflet';
 import { EditControl } from 'react-leaflet-draw';
@@ -26,18 +25,18 @@ const MapComponent: React.FC<MapComponentProps> = ({
   return (
     <Card className="lg:col-span-3 border-0 shadow-md">
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 lg:gap-0">
           <div className="flex items-center space-x-2">
             <Map className="w-5 h-5 text-emerald-600" />
-            <CardTitle>Interactive Map</CardTitle>
+            <CardTitle className="text-base lg:text-lg">Interactive Map</CardTitle>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 mt-2 lg:mt-0 relative z-50">
             <Select value={activeLayer} onValueChange={setActiveLayer}>
               <SelectTrigger className="w-32">
                 <Layers className="w-4 h-4 mr-2" />
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-50" style={{zIndex: 50, position: 'absolute', bottom: '100%', marginBottom: '0.5rem', top: 'auto', left: 0, right: 'auto', minWidth: '8rem'}}>
                 <SelectItem value="satellite">Satellite</SelectItem>
                 <SelectItem value="terrain">Terrain</SelectItem>
                 <SelectItem value="street">Street</SelectItem>
@@ -81,12 +80,19 @@ const MapComponent: React.FC<MapComponentProps> = ({
                       weight: 2
                     }
                   },
-                  marker: true,
+                  marker: {
+                    icon: new L.Icon.Default()
+                  },
                   polyline: false,
                   circlemarker: false
                 }}
                 edit={{
-                  edit: true,
+                  edit: {
+                    selectedPathOptions: {
+                      color: '#6366f1',
+                      weight: 3
+                    }
+                  },
                   remove: true
                 }}
               />
