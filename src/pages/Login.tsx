@@ -77,8 +77,11 @@ const Login = () => {
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
-          <div className="mt-6 text-center text-sm text-stone-500">
-            Demo credentials: admin@tides.com / admin123
+          <div className="mt-6 text-center text-sm text-stone-500 space-y-1">
+            <div className="font-medium">Demo Credentials:</div>
+            <div>Admin: admin@tides.com / admin123</div>
+            <div>Engineer: engineer@tides.com / eng123</div>
+            <div>Planner: planner@tides.com / plan123</div>
           </div>
         </CardContent>
       </Card>
