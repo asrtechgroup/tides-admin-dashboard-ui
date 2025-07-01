@@ -46,7 +46,7 @@ const SuitabilityTabContent: React.FC<SuitabilityTabContentProps> = ({
 }) => {
   const [formData, setFormData] = useState({
     name: '',
-    category: 'soil' as const,
+    category: 'soil' as 'soil' | 'climate' | 'topography' | 'water' | 'crop',
     minValue: '',
     maxValue: '',
     unit: '',
@@ -152,7 +152,7 @@ const SuitabilityTabContent: React.FC<SuitabilityTabContentProps> = ({
                   
                   <div>
                     <Label htmlFor="category">Category</Label>
-                    <Select value={formData.category} onValueChange={(value: any) => setFormData({...formData, category: value})}>
+                    <Select value={formData.category} onValueChange={(value: 'soil' | 'climate' | 'topography' | 'water' | 'crop') => setFormData({...formData, category: value})}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>

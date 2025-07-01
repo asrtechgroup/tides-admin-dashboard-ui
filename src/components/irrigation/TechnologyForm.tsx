@@ -17,11 +17,11 @@ interface TechnologyFormProps {
 const TechnologyForm: React.FC<TechnologyFormProps> = ({ technology, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState({
     name: '',
-    type: 'drip' as const,
+    type: 'drip' as 'drip' | 'sprinkler' | 'micro-spray' | 'surface' | 'subsurface',
     description: '',
     efficiency: '',
     waterRequirement: '',
-    maintenanceLevel: 'medium' as const,
+    maintenanceLevel: 'medium' as 'low' | 'medium' | 'high',
     lifespan: '',
     soilTypes: [] as string[],
     cropTypes: [] as string[],
@@ -104,7 +104,7 @@ const TechnologyForm: React.FC<TechnologyFormProps> = ({ technology, onSubmit, o
         
         <div>
           <Label htmlFor="type">Type *</Label>
-          <Select value={formData.type} onValueChange={(value: any) => setFormData({...formData, type: value})}>
+          <Select value={formData.type} onValueChange={(value: 'drip' | 'sprinkler' | 'micro-spray' | 'surface' | 'subsurface') => setFormData({...formData, type: value})}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -174,7 +174,7 @@ const TechnologyForm: React.FC<TechnologyFormProps> = ({ technology, onSubmit, o
 
       <div>
         <Label htmlFor="maintenanceLevel">Maintenance Level *</Label>
-        <Select value={formData.maintenanceLevel} onValueChange={(value: any) => setFormData({...formData, maintenanceLevel: value})}>
+        <Select value={formData.maintenanceLevel} onValueChange={(value: 'low' | 'medium' | 'high') => setFormData({...formData, maintenanceLevel: value})}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
