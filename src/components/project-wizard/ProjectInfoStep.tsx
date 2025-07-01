@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { ProjectInfo, ZONES, REGIONS, DISTRICTS, WATER_SOURCE_NAMES } from '@/types/project-wizard';
 import ProjectDetailsCard from './cards/ProjectDetailsCard';
@@ -17,6 +16,7 @@ const ProjectInfoStep: React.FC<ProjectInfoStepProps> = ({ data, onUpdate }) => 
   const [availableRegions, setAvailableRegions] = useState<string[]>([]);
   const [availableDistricts, setAvailableDistricts] = useState<string[]>([]);
   const [availableWaterSourceNames, setAvailableWaterSourceNames] = useState<string[]>([]);
+  const [fileCoordinates, setFileCoordinates] = useState<[number, number][]>();
 
   // Debug logs to track state changes
   console.log('Current data:', data);
@@ -140,6 +140,11 @@ const ProjectInfoStep: React.FC<ProjectInfoStepProps> = ({ data, onUpdate }) => 
     handleInputChange('cropVarieties', newCrops);
   };
 
+  const handleFileCoordinates = (coordinates: [number, number][]) => {
+    console.log('File coordinates received:', coordinates);
+    setFileCoordinates(coordinates);
+  };
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -153,11 +158,18 @@ const ProjectInfoStep: React.FC<ProjectInfoStepProps> = ({ data, onUpdate }) => 
             onRegionChange={handleRegionChange}
             onDistrictChange={handleDistrictChange}
           />
-          <FileUploadCard data={data} onUpdate={handleInputChange} />
+          <FileUploadCard 
+            data={data} 
+            onUpdate={handleInputChange}
+            onFileCoordinates={handleFileCoordinates}
+          />
         </div>
 
         <div className="space-y-6">
-          <MapPreviewCard />
+          <MapPreviewCard 
+            coordinates={fileCoordinates}
+            projectLocation={{ zone: data.zone, regions: data.regions }}
+          />
           <WaterSourceCard
             data={data}
             availableWaterSourceNames={availableWaterSourceNames}
