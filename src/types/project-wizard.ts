@@ -1,3 +1,4 @@
+
 export interface ProjectInfo {
   name: string;
   description: string;
@@ -48,7 +49,16 @@ export interface CropWaterRequirement {
 
 export interface HydraulicDesign {
   crossSectionUrl?: string;
-  designParameters: Record<string, any>;
+  designParameters: {
+    channelWidth?: number;
+    channelDepth?: number;
+    lowerWidth?: number;
+    slope?: number;
+    roughness?: number;
+    flowVelocity?: number;
+    discharge?: number;
+    [key: string]: any;
+  };
 }
 
 export interface BOQItem {

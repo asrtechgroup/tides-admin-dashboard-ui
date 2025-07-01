@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ProjectInfo, ZONES } from '@/types/project-wizard';
@@ -27,10 +26,10 @@ const LocationSelectionCard: React.FC<LocationSelectionCardProps> = ({
     <Card>
       <CardHeader>
         <CardTitle className="text-lg">Location Selection</CardTitle>
-        <CardDescription>Select zone, regions, and districts in order</CardDescription>
+        <CardDescription>Select zone, region, and district in order</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Zone Selection - First Row */}
+        {/* Zone Selection */}
         <div>
           <Label>Zone</Label>
           <Select value={data.zone || ""} onValueChange={onZoneChange}>
@@ -47,60 +46,47 @@ const LocationSelectionCard: React.FC<LocationSelectionCardProps> = ({
           </Select>
         </div>
 
-        {/* Region and District Selection - Second Row */}
+        {/* Region Selection */}
         {data.zone && availableRegions.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Regions Selection */}
-            <div>
-              <Label>Regions (Select multiple)</Label>
-              <div className="grid grid-cols-1 gap-2 mt-2 max-h-32 overflow-y-auto">
+          <div>
+            <Label>Region</Label>
+            <Select 
+              value={(data.regions && data.regions.length > 0) ? data.regions[0] : ""} 
+              onValueChange={onRegionChange}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select region" />
+              </SelectTrigger>
+              <SelectContent>
                 {availableRegions.map((region) => (
-                  <Button
-                    key={region}
-                    variant={data.regions?.includes(region) ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => onRegionChange(region)}
-                    className="text-left justify-start"
-                  >
+                  <SelectItem key={region} value={region}>
                     {region}
-                  </Button>
+                  </SelectItem>
                 ))}
-              </div>
-              {data.regions && data.regions.length > 0 && (
-                <p className="text-xs text-stone-600 mt-2">
-                  Selected: {data.regions.join(', ')}
-                </p>
-              )}
-            </div>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
-            {/* Districts Selection */}
-            <div>
-              <Label>Districts (Select multiple)</Label>
-              <div className="grid grid-cols-1 gap-2 mt-2 max-h-32 overflow-y-auto">
+        {/* District Selection */}
+        {data.regions && data.regions.length > 0 && availableDistricts.length > 0 && (
+          <div>
+            <Label>District</Label>
+            <Select 
+              value={(data.districts && data.districts.length > 0) ? data.districts[0] : ""} 
+              onValueChange={onDistrictChange}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select district" />
+              </SelectTrigger>
+              <SelectContent>
                 {availableDistricts.map((district) => (
-                  <Button
-                    key={district}
-                    variant={data.districts?.includes(district) ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => onDistrictChange(district)}
-                    className="text-left justify-start"
-                  >
+                  <SelectItem key={district} value={district}>
                     {district}
-                  </Button>
+                  </SelectItem>
                 ))}
-              </div>
-              {data.districts && data.districts.length > 0 && (
-                <p className="text-xs text-stone-600 mt-2">
-                  Selected: {data.districts.join(', ')}
-                </p>
-              )}
-              {data.regions && data.regions.length > 0 && availableDistricts.length === 0 && (
-                <p className="text-sm text-stone-500 mt-2">No districts available for selected regions</p>
-              )}
-              {(!data.regions || data.regions.length === 0) && (
-                <p className="text-sm text-stone-500 mt-2">Select regions first</p>
-              )}
-            </div>
+              </SelectContent>
+            </Select>
           </div>
         )}
 

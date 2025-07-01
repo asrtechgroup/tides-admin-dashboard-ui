@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { ProjectInfo, ZONES, REGIONS, DISTRICTS, WATER_SOURCE_NAMES } from '@/types/project-wizard';
 import ProjectDetailsCard from './cards/ProjectDetailsCard';
@@ -91,15 +92,9 @@ const ProjectInfoStep: React.FC<ProjectInfoStepProps> = ({ data, onUpdate }) => 
 
   const handleRegionChange = (region: string) => {
     console.log('Region change handler called with:', region);
-    const currentRegions = data.regions || [];
-    const newRegions = currentRegions.includes(region)
-      ? currentRegions.filter(r => r !== region)
-      : [...currentRegions, region];
-    console.log('New regions array:', newRegions);
-    
     const updatedData = {
       ...data,
-      regions: newRegions,
+      regions: [region], // Single region selection
       districts: [],
       selectedWaterSource: undefined,
       waterSourceName: undefined
@@ -109,15 +104,9 @@ const ProjectInfoStep: React.FC<ProjectInfoStepProps> = ({ data, onUpdate }) => 
 
   const handleDistrictChange = (district: string) => {
     console.log('District change handler called with:', district);
-    const currentDistricts = data.districts || [];
-    const newDistricts = currentDistricts.includes(district)
-      ? currentDistricts.filter(d => d !== district)
-      : [...currentDistricts, district];
-    console.log('New districts array:', newDistricts);
-    
     const updatedData = {
       ...data,
-      districts: newDistricts
+      districts: [district] // Single district selection
     };
     onUpdate(updatedData);
   };

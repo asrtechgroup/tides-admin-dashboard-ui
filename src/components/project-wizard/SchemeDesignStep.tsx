@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,6 +6,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Calculator, Wrench, FileText } from 'lucide-react';
 import { CropWaterRequirement, HydraulicDesign } from '@/types/project-wizard';
 import { useToast } from '@/hooks/use-toast';
+import SuitabilityCriteriaCard from './cards/SuitabilityCriteriaCard';
+import VectorCrossSection from './cards/VectorCrossSection';
 
 interface SchemeDesignStepProps {
   data: {
@@ -77,10 +78,11 @@ const SchemeDesignStep: React.FC<SchemeDesignStepProps> = ({ data, onUpdate }) =
     
     setTimeout(() => {
       const mockDesign: HydraulicDesign = {
-        crossSectionUrl: 'https://images.unsplash.com/photo-1504893524553-b855bce32c67?w=800&h=400&fit=crop',
+        crossSectionUrl: '', // We'll use vector instead
         designParameters: {
           channelWidth: 2.5,
           channelDepth: 1.8,
+          lowerWidth: 1.2,
           slope: 0.001,
           roughness: 0.025,
           flowVelocity: 0.8,
@@ -193,16 +195,14 @@ const SchemeDesignStep: React.FC<SchemeDesignStepProps> = ({ data, onUpdate }) =
               Generate Hydraulic Design
             </Button>
             
-            {data.hydraulicDesign.crossSectionUrl && (
+            {data.hydraulicDesign.designParameters && Object.keys(data.hydraulicDesign.designParameters).length > 0 && (
               <div className="space-y-3">
                 <h4 className="font-medium">Cross-Section Design:</h4>
-                <div className="border rounded-lg overflow-hidden">
-                  <img 
-                    src={data.hydraulicDesign.crossSectionUrl} 
-                    alt="Hydraulic Cross-Section" 
-                    className="w-full h-48 object-cover"
-                  />
-                </div>
+                <VectorCrossSection 
+                  upperWidth={data.hydraulicDesign.designParameters.channelWidth || 2.5}
+                  depth={data.hydraulicDesign.designParameters.channelDepth || 1.8}
+                  lowerWidth={data.hydraulicDesign.designParameters.lowerWidth || 1.2}
+                />
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div className="bg-stone-50 p-2 rounded">
                     <span className="text-stone-600">Width:</span>
@@ -226,6 +226,8 @@ const SchemeDesignStep: React.FC<SchemeDesignStepProps> = ({ data, onUpdate }) =
           </CardContent>
         </Card>
       </div>
+
+      <SuitabilityCriteriaCard />
 
       <Dialog open={showProjectDialog} onOpenChange={setShowProjectDialog}>
         <DialogContent className="max-w-2xl">
