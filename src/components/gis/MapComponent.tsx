@@ -48,14 +48,22 @@ const MapComponent: React.FC<MapComponentProps> = ({
       <CardContent>
         <div className="h-96 lg:h-[500px] rounded-lg overflow-hidden border border-stone-200">
           <MapContainer
-            center={[21.1458, 79.0882]}
-            zoom={13}
+            center={[-6.368216, 34.885195]}
+            zoom={20}
             style={{ height: '100%', width: '100%' }}
             ref={mapRef}
           >
             <TileLayer
-              url={layerStyles[activeLayer as keyof typeof layerStyles]}
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url={
+                activeLayer === 'satellite'
+                  ? 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}'
+                  : layerStyles[activeLayer as keyof typeof layerStyles]
+              }
+              attribution={
+                activeLayer === 'satellite'
+                  ? '&copy; <a href="https://www.google.com/earth/">Google Earth</a>'
+                  : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              }
             />
             <FeatureGroup>
               <EditControl
