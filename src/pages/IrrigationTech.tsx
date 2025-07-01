@@ -1,11 +1,13 @@
-
-import React, { useState } from 'react';
+import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Droplets, Settings, Target } from 'lucide-react';
+import { Droplets, Settings, Target, Calculator } from 'lucide-react';
 import { useIrrigationTechnologies } from '@/hooks/useIrrigationTechnologies';
+import { useSuitabilityCriteria } from '@/hooks/useSuitabilityCriteria';
+import { useCostingRules } from '@/hooks/useCostingRules';
 import TechnologiesTabContent from '@/components/irrigation/TechnologiesTabContent';
 import SpecificationsTabContent from '@/components/irrigation/SpecificationsTabContent';
-import EmptyTabContent from '@/components/irrigation/EmptyTabContent';
+import SuitabilityTabContent from '@/components/irrigation/SuitabilityTabContent';
+import CostingRulesTabContent from '@/components/irrigation/CostingRulesTabContent';
 import { TechSpecification } from '@/types/irrigation';
 import { toast } from 'sonner';
 
@@ -22,8 +24,32 @@ const IrrigationTech = () => {
     handleCancelForm,
   } = useIrrigationTechnologies();
 
+  const {
+    criteria,
+    showCriteriaForm,
+    editingCriterion,
+    setShowCriteriaForm,
+    handleAddCriterion,
+    handleEditCriterion,
+    handleUpdateCriterion,
+    handleDeleteCriterion,
+    handleCancelForm: handleCancelCriteriaForm,
+  } = useSuitabilityCriteria();
+
+  const {
+    costingRules,
+    showCostingForm,
+    editingCostingRule,
+    setShowCostingForm,
+    handleAddCostingRule,
+    handleEditCostingRule,
+    handleUpdateCostingRule,
+    handleDeleteCostingRule,
+    handleCancelForm: handleCancelCostingForm,
+  } = useCostingRules();
+
   // Specifications state
-  const [specifications, setSpecifications] = useState<TechSpecification[]>([
+  const [specifications, setSpecifications] = React.useState<TechSpecification[]>([
     {
       parameter: 'Flow Rate',
       value: '2.0',
@@ -38,8 +64,8 @@ const IrrigationTech = () => {
     },
   ]);
 
-  const [showSpecificationForm, setShowSpecificationForm] = useState(false);
-  const [editingSpecification, setEditingSpecification] = useState<TechSpecification | undefined>();
+  const [showSpecificationForm, setShowSpecificationForm] = React.useState(false);
+  const [editingSpecification, setEditingSpecification] = React.useState<TechSpecification | undefined>();
 
   // Specification handlers
   const handleAddSpecification = (data: any) => {
@@ -92,7 +118,7 @@ const IrrigationTech = () => {
       </div>
 
       <Tabs defaultValue="technologies" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="technologies" className="flex items-center gap-2">
             <Droplets className="h-4 w-4" />
             Technologies
@@ -104,6 +130,10 @@ const IrrigationTech = () => {
           <TabsTrigger value="suitability" className="flex items-center gap-2">
             <Target className="h-4 w-4" />
             Suitability
+          </TabsTrigger>
+          <TabsTrigger value="costing" className="flex items-center gap-2">
+            <Calculator className="h-4 w-4" />
+            Costing Rules
           </TabsTrigger>
         </TabsList>
 
@@ -134,12 +164,28 @@ const IrrigationTech = () => {
         </TabsContent>
 
         <TabsContent value="suitability" className="space-y-4">
-          <EmptyTabContent
-            title="Suitability Criteria"
-            description="Define criteria for technology selection and recommendations"
-            buttonText="Add Criteria"
-            Icon={Target}
-            emptyMessage='No suitability criteria available. Click "Add Criteria" to get started.'
+          <SuitabilityTabContent
+            criteria={criteria}
+            showCriteriaForm={showCriteriaForm}
+            editingCriterion={editingCriterion}
+            onShowForm={() => setShowCriteriaForm(true)}
+            onEdit={handleEditCriterion}
+            onDelete={handleDeleteCriterion}
+            onSubmit={editingCriterion ? handleUpdateCriterion : handleAddCriterion}
+            onCancel={handleCancelCriteriaForm}
+          />
+        </TabsContent>
+
+        <TabsContent value="costing" className="space-y-4">
+          <CostingRulesTabContent
+            costingRules={costingRules}
+            showCostingForm={showCostingForm}
+            editingCostingRule={editingCostingRule}
+            onShowForm={() => setShowCostingForm(true)}
+            onEdit={handleEditCostingRule}
+            onDelete={handleDeleteCostingRule}
+            onSubmit={editingCostingRule ? handleUpdateCostingRule : handleAddCostingRule}
+            onCancel={handleCancelCostingForm}
           />
         </TabsContent>
       </Tabs>
