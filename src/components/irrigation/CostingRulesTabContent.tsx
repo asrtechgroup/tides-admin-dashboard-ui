@@ -88,9 +88,9 @@ const CostingRulesTabContent: React.FC<CostingRulesTabContentProps> = ({
               <Calculator className="w-5 h-5 text-green-600" />
               <CardTitle>Costing Rules</CardTitle>
             </div>
-            <Dialog open={showCostingForm} onOpenChange={onCancel}>
+            <Dialog open={showCostingForm} onOpenChange={(open) => open ? onShowForm() : onCancel()}>
               <DialogTrigger asChild>
-                <Button onClick={onShowForm}>
+                <Button>
                   <Plus className="w-4 h-4 mr-2" />
                   Add Rule
                 </Button>

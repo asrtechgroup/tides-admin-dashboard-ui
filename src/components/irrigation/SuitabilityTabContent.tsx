@@ -122,9 +122,9 @@ const SuitabilityTabContent: React.FC<SuitabilityTabContentProps> = ({
               <Target className="w-5 h-5 text-orange-600" />
               <CardTitle>Suitability Criteria</CardTitle>
             </div>
-            <Dialog open={showCriteriaForm} onOpenChange={onCancel}>
+            <Dialog open={showCriteriaForm} onOpenChange={(open) => open ? onShowForm() : onCancel()}>
               <DialogTrigger asChild>
-                <Button onClick={onShowForm}>
+                <Button>
                   <Plus className="w-4 h-4 mr-2" />
                   Add Criteria
                 </Button>
