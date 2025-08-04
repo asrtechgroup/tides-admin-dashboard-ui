@@ -49,24 +49,19 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
 
   // Filter menu items based on user permissions
   const menuItems = allMenuItems.filter(item => {
+    // Special handling for dashboard - show for all roles but with different permissions
+    if (item.path === '/') {
+      return hasPermission('dashboard_admin') || 
+             hasPermission('dashboard_engineer') || 
+             hasPermission('dashboard_planner') || 
+             hasPermission('dashboard_viewer');
+    }
     // Special handling for settings - show for all roles but with different permissions
     if (item.path === '/settings') {
       return hasPermission('basic_settings') || hasPermission('full_settings');
     }
     return hasPermission(item.permission);
   });
-
-  // Adjust dashboard permission based on role
-  const dashboardItem = menuItems.find(item => item.path === '/');
-  if (dashboardItem && user) {
-    if (user.role === 'Engineer') {
-      dashboardItem.permission = 'dashboard_engineer';
-    } else if (user.role === 'Planner') {
-      dashboardItem.permission = 'dashboard_planner';
-    } else if (user.role === 'Viewer') {
-      dashboardItem.permission = 'dashboard_viewer';
-    }
-  }
 
   return (
     <div
