@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,9 +13,60 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Plus, Search, Calendar, MapPin } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
-// Mock data for draft projects - replace with actual API call
-const mockDraftProjects = [
+/**
+ * DJANGO API INTEGRATION POINTS:
+ * 
+ * 1. GET /api/projects/ - Fetch user's projects with filters
+ *    - Headers: Authorization: Bearer {token}
+ *    - Query params: search, status, user_id
+ *    - Response: { results: Project[], count: number }
+ * 
+ * 2. POST /api/projects/ - Create new project
+ *    - Headers: Authorization: Bearer {token}
+ *    - Body: { name, description, zone, regions, districts, status }
+ * 
+ * 3. GET /api/projects/{id}/ - Get specific project details
+ * 
+ * 4. PUT /api/projects/{id}/ - Update project
+ * 
+ * 5. DELETE /api/projects/{id}/ - Delete project
+ * 
+ * Project Model Fields:
+ * - id (UUID)
+ * - name (CharField)
+ * - description (TextField)
+ * - zone (CharField)
+ * - regions (JSONField)
+ * - districts (JSONField)
+ * - scheme_name (CharField)
+ * - step (IntegerField)
+ * - status (CharField) - choices: draft, submitted, approved
+ * - created_by (ForeignKey to User)
+ * - created_at (DateTimeField)
+ * - updated_at (DateTimeField)
+ * - project_data (JSONField) - stores complete wizard data
+ */
+
+interface Project {
+  id: string;
+  name: string;
+  description: string;
+  zone: string;
+  regions: string[];
+  districts: string[];
+  schemeName: string;
+  step: number;
+  status: 'draft' | 'submitted' | 'approved';
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: string;
+}
+
+// Mock data for development - replace with Django API calls
+const mockDraftProjects: Project[] = [
   {
     id: '1',
     name: 'Irrigation Project Alpha',
@@ -25,6 +76,7 @@ const mockDraftProjects = [
     districts: ['District 1'],
     schemeName: 'Alpha Scheme',
     step: 2,
+    status: 'draft',
     createdAt: '2024-01-15',
     updatedAt: '2024-01-20'
   },
@@ -37,6 +89,7 @@ const mockDraftProjects = [
     districts: ['District 2', 'District 3'],
     schemeName: 'Beta Management Scheme',
     step: 1,
+    status: 'draft',
     createdAt: '2024-01-10',
     updatedAt: '2024-01-18'
   },
@@ -49,6 +102,7 @@ const mockDraftProjects = [
     districts: ['District 4'],
     schemeName: 'Gamma Network',
     step: 3,
+    status: 'submitted',
     createdAt: '2024-01-05',
     updatedAt: '2024-01-22'
   }
@@ -56,7 +110,77 @@ const mockDraftProjects = [
 
 const Projects = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [projects] = useState(mockDraftProjects);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+
+  /**
+   * Fetch projects from Django backend
+   * TODO: Replace with actual Django API call
+   */
+  const fetchProjects = async () => {
+    try {
+      setIsLoading(true);
+      
+      // TODO: Replace with actual API call
+      // const response = await fetch('/api/projects/', {
+      //   headers: {
+      //     'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      //     'Content-Type': 'application/json',
+      //   },
+      // });
+      // const data = await response.json();
+      // setProjects(data.results);
+      
+      // Mock data for development
+      setProjects(mockDraftProjects);
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch projects",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /**
+   * Create new project via Django API
+   * TODO: Implement project creation
+   */
+  const createProject = async (projectData: Partial<Project>) => {
+    try {
+      // TODO: Replace with actual API call
+      // const response = await fetch('/api/projects/', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify(projectData),
+      // });
+      // const newProject = await response.json();
+      // setProjects([newProject, ...projects]);
+      
+      toast({
+        title: "Project Created",
+        description: "New project has been created successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create project",
+        variant: "destructive"
+      });
+    }
+  };
 
   const filteredProjects = projects.filter(project =>
     project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

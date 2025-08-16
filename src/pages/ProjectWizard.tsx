@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ChevronLeft, ChevronRight, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import { ProjectWizardData, WIZARD_STEPS } from '@/types/project-wizard';
 import ProjectInfoStep from '@/components/project-wizard/ProjectInfoStep';
 import CropCalendarStep from '@/components/project-wizard/CropCalendarStep';
@@ -14,10 +15,59 @@ import SchemeDesignStep from '@/components/project-wizard/SchemeDesignStep';
 import ResourcesSelectionStep from '@/components/project-wizard/ResourcesSelectionStep';
 import BOQSubmissionStep from '@/components/project-wizard/BOQSubmissionStep';
 
+/**
+ * DJANGO API INTEGRATION POINTS FOR PROJECT WIZARD:
+ * 
+ * 1. PROJECT MANAGEMENT APIs:
+ *    GET /api/project-wizard/{project_id}/ - Load existing project
+ *    POST /api/project-wizard/ - Create new project
+ *    PUT /api/project-wizard/{project_id}/ - Save project progress
+ *    POST /api/project-wizard/{project_id}/submit/ - Submit for approval
+ * 
+ * 2. HYDRAULIC DESIGN APIs:
+ *    POST /api/hydraulic-design/calculate/ - Calculate water requirements
+ *    POST /api/hydraulic-design/cross-section/ - Generate cross-section
+ *    GET /api/hydraulic-design/parameters/ - Get design parameters
+ * 
+ * 3. RESOURCE PRICING APIs:
+ *    GET /api/resources/materials/ - Get materials with current prices
+ *    GET /api/resources/equipment/ - Get equipment with rental/purchase rates
+ *    GET /api/resources/labor/ - Get labor rates by region
+ * 
+ * 4. BOQ GENERATION APIs:
+ *    POST /api/boq/generate/ - Generate BOQ from project data
+ *    POST /api/boq/export/ - Export BOQ as PDF/Excel
+ *    GET /api/boq/templates/ - Get BOQ templates
+ * 
+ * 5. FILE UPLOAD APIs:
+ *    POST /api/files/upload/ - Upload shapefiles, documents
+ *    GET /api/files/{file_id}/download/ - Download uploaded files
+ * 
+ * Models Required:
+ * 
+ * ProjectWizard:
+ * - id, name, description, created_by, status
+ * - current_step, project_data (JSONField)
+ * - created_at, updated_at, submitted_at
+ * 
+ * HydraulicDesign:
+ * - id, project_id, design_type, parameters (JSONField)
+ * - cross_section_file, calculations (JSONField)
+ * 
+ * ProjectResource:
+ * - id, project_id, resource_type, resource_id
+ * - quantity, unit_rate, total_cost
+ * 
+ * ProjectBOQ:
+ * - id, project_id, boq_data (JSONField)
+ * - total_cost, cost_per_hectare, generated_at
+ */
+
 const ProjectWizard = () => {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -53,10 +103,23 @@ const ProjectWizard = () => {
     }
   }, [projectId]);
 
+  /**
+   * Load existing project from Django API
+   * TODO: Replace with actual Django API call
+   */
   const loadProject = async (id: string) => {
     setIsLoading(true);
     try {
-      // Mock API call - replace with actual API
+      // TODO: Replace with actual API call
+      // const response = await fetch(`/api/project-wizard/${id}/`, {
+      //   headers: {
+      //     'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      //   },
+      // });
+      // const data = await response.json();
+      // setProjectData(data);
+      // setCurrentStep(data.current_step || 0);
+      
       console.log('Loading project:', id);
       toast({
         title: "Project Loaded",
@@ -73,10 +136,39 @@ const ProjectWizard = () => {
     }
   };
 
+  /**
+   * Save project progress to Django API
+   * TODO: Replace with actual Django API call
+   */
   const saveProject = async () => {
     setIsLoading(true);
     try {
-      // Mock API call - replace with actual API
+      const endpoint = projectId ? 
+        `/api/project-wizard/${projectId}/` : 
+        '/api/project-wizard/';
+      
+      const method = projectId ? 'PUT' : 'POST';
+      
+      // TODO: Replace with actual API call
+      // const response = await fetch(endpoint, {
+      //   method: method,
+      //   headers: {
+      //     'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify({
+      //     ...projectData,
+      //     current_step: currentStep,
+      //     updated_at: new Date().toISOString(),
+      //   }),
+      // });
+      // const savedProject = await response.json();
+      // 
+      // if (!projectId) {
+      //   // Navigate to edit mode with new project ID
+      //   navigate(`/project-wizard/${savedProject.id}`);
+      // }
+      
       console.log('Saving project:', projectData);
       toast({
         title: "Project Saved",
@@ -90,6 +182,40 @@ const ProjectWizard = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  /**
+   * Submit project for approval via Django API
+   * TODO: Replace with actual Django API call
+   */
+  const submitProject = async () => {
+    try {
+      // TODO: Replace with actual API call
+      // const response = await fetch(`/api/project-wizard/${projectId}/submit/`, {
+      //   method: 'POST',
+      //   headers: {
+      //     'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify({
+      //     comments: projectData.comments,
+      //   }),
+      // });
+      // const result = await response.json();
+      
+      updateProjectData({ status: 'submitted' });
+      toast({
+        title: "Project Submitted",
+        description: "Your project has been submitted for approval.",
+      });
+      navigate('/projects');
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to submit project.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -169,14 +295,7 @@ const ProjectWizard = () => {
               comments: projectData.comments
             }}
             onUpdate={(data) => updateProjectData(data)}
-            onSubmit={() => {
-              updateProjectData({ status: 'submitted' });
-              toast({
-                title: "Project Submitted",
-                description: "Your project has been submitted for approval.",
-              });
-              navigate('/projects');
-            }}
+            onSubmit={submitProject}
           />
         );
       default:

@@ -10,6 +10,52 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FileText, Calculator, Download, Eye, Edit, Trash2, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+
+/**
+ * DJANGO API INTEGRATION POINTS FOR BOQ BUILDER:
+ * 
+ * 1. GET /api/existing-projects/ - Fetch existing irrigation projects for BOQ analysis
+ *    - Headers: Authorization: Bearer {token}
+ *    - Query params: location, irrigation_type, status
+ *    - Response: { results: ExistingProject[], count: number }
+ * 
+ * 2. GET /api/materials/ - Fetch materials database with current prices
+ *    - Response: { results: Material[], count: number }
+ * 
+ * 3. GET /api/technologies/ - Fetch irrigation technologies with specifications
+ *    - Response: { results: Technology[], count: number }
+ * 
+ * 4. POST /api/boq-analysis/ - Generate BOQ for existing project
+ *    - Body: { project_id, materials, technologies, labor_rates }
+ *    - Response: { boq_items: BOQItem[], total_cost: number }
+ * 
+ * 5. GET /api/cost-database/ - Fetch cost database for calculations
+ *    - Response: { materials: {}, equipment: {}, labor: {} }
+ * 
+ * 6. POST /api/boq-export/ - Export BOQ document
+ *    - Body: { boq_items, project_info, format: 'pdf'|'excel' }
+ *    - Response: { download_url: string }
+ * 
+ * Models Required:
+ * 
+ * ExistingProject:
+ * - id, name, location, irrigation_type, area, status
+ * - construction_date, materials_used (JSONField)
+ * - technologies_used (JSONField), actual_cost
+ * 
+ * Material:
+ * - id, name, category, unit, current_price, specifications
+ * - supplier, last_updated, region_specific_price (JSONField)
+ * 
+ * Technology:
+ * - id, name, type, efficiency, specifications (JSONField)
+ * - cost_per_unit, installation_cost, maintenance_cost
+ * 
+ * BOQAnalysis:
+ * - id, existing_project_id, analyzed_by, analysis_date
+ * - boq_data (JSONField), total_cost, cost_per_hectare
+ */
 
 interface Project {
   id: string;
@@ -35,10 +81,14 @@ interface BOQItem {
 
 const BOQBuilder = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [boqItems, setBOQItems] = useState<BOQItem[]>([]);
   const [editingItem, setEditingItem] = useState<BOQItem | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [materialsDatabase, setMaterialsDatabase] = useState<any>({});
+  const [technologiesDatabase, setTechnologiesDatabase] = useState<any>({});
   const [newItem, setNewItem] = useState<Partial<BOQItem>>({
     category: 'Materials',
     description: '',
@@ -47,6 +97,133 @@ const BOQBuilder = () => {
     unit: 'nos',
     rate: 0
   });
+
+  useEffect(() => {
+    fetchMaterialsDatabase();
+    fetchTechnologiesDatabase();
+  }, []);
+
+  /**
+   * Fetch materials database with current prices from Django API
+   * TODO: Replace with actual Django API call
+   */
+  const fetchMaterialsDatabase = async () => {
+    try {
+      // TODO: Replace with actual API call
+      // const response = await fetch('/api/materials/', {
+      //   headers: {
+      //     'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      //   },
+      // });
+      // const data = await response.json();
+      // setMaterialsDatabase(data.results);
+      
+      // Mock data for development
+      console.log('Fetching materials database...');
+    } catch (error) {
+      console.error('Error fetching materials:', error);
+    }
+  };
+
+  /**
+   * Fetch technologies database from Django API
+   * TODO: Replace with actual Django API call
+   */
+  const fetchTechnologiesDatabase = async () => {
+    try {
+      // TODO: Replace with actual API call
+      // const response = await fetch('/api/technologies/', {
+      //   headers: {
+      //     'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      //   },
+      // });
+      // const data = await response.json();
+      // setTechnologiesDatabase(data.results);
+      
+      // Mock data for development
+      console.log('Fetching technologies database...');
+    } catch (error) {
+      console.error('Error fetching technologies:', error);
+    }
+  };
+
+  /**
+   * Generate BOQ analysis for existing project using Django API
+   * TODO: Replace with actual Django API call
+   */
+  const generateBOQAnalysis = async (projectId: string, materials: any[], technologies: any[]) => {
+    try {
+      setIsLoading(true);
+      
+      // TODO: Replace with actual API call
+      // const response = await fetch('/api/boq-analysis/', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify({
+      //     project_id: projectId,
+      //     materials: materials,
+      //     technologies: technologies,
+      //   }),
+      // });
+      // const data = await response.json();
+      // setBOQItems(data.boq_items);
+      
+      toast({
+        title: "BOQ Analysis Complete",
+        description: "Cost analysis has been generated based on materials and technologies database",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to generate BOQ analysis",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /**
+   * Export BOQ document via Django API
+   * TODO: Replace with actual Django API call
+   */
+  const exportBOQ = async (format: 'pdf' | 'excel' = 'pdf') => {
+    try {
+      setIsLoading(true);
+      
+      // TODO: Replace with actual API call
+      // const response = await fetch('/api/boq-export/', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify({
+      //     boq_items: boqItems,
+      //     project_info: selectedProject,
+      //     format: format,
+      //   }),
+      // });
+      // const data = await response.json();
+      // window.open(data.download_url, '_blank');
+      
+      toast({
+        title: "BOQ Exported",
+        description: `BOQ document has been exported as ${format.toUpperCase()}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to export BOQ",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Mock project data
   const projects: Project[] = [

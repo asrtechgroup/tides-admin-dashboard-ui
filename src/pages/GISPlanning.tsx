@@ -11,6 +11,58 @@ import PageHeader from '@/components/gis/PageHeader';
 import SchemeDesignPanel from '@/components/gis/SchemeDesignPanel';
 import BOQGenerationPanel from '@/components/gis/BOQGenerationPanel';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { useAuth } from '@/contexts/AuthContext';
+
+/**
+ * DJANGO API INTEGRATION POINTS FOR GIS PLANNING:
+ * 
+ * 1. FILE UPLOAD APIs:
+ *    POST /api/shapefiles/upload/ - Upload shapefile (.shp, .dbf, .shx, .prj)
+ *    - Headers: Authorization: Bearer {token}
+ *    - Body: FormData with files
+ *    - Response: { shapefile_id: string, features: GeoJSON }
+ * 
+ * 2. GIS DATA APIs:
+ *    GET /api/projects/{project_id}/zones/ - Fetch project zones
+ *    POST /api/projects/{project_id}/zones/ - Create new zone
+ *    PUT /api/zones/{zone_id}/ - Update zone properties
+ *    DELETE /api/zones/{zone_id}/ - Delete zone
+ * 
+ * 3. SPATIAL ANALYSIS APIs:
+ *    POST /api/gis/calculate-area/ - Calculate zone area from coordinates
+ *    POST /api/gis/hydraulic-design/ - Generate hydraulic design
+ *    POST /api/gis/water-requirements/ - Calculate water requirements
+ * 
+ * 4. EXPORT APIs:
+ *    POST /api/gis/export-shapefile/ - Export zones as shapefile
+ *    POST /api/gis/export-design/ - Export scheme design
+ *    GET /api/gis/projects/{project_id}/download/{file_type}/ - Download files
+ * 
+ * 5. MAP LAYERS APIs:
+ *    GET /api/gis/base-layers/ - Get available base map layers
+ *    GET /api/gis/existing-projects/ - Get existing projects for overlay
+ * 
+ * Models Required:
+ * 
+ * Shapefile:
+ * - id, name, file_path, uploaded_by, upload_date
+ * - geometry_type, feature_count, bounding_box (JSONField)
+ * 
+ * Zone:
+ * - id, project_id, name, geometry (GeometryField)
+ * - area, irrigation_type, crop_type, status
+ * - water_requirement, design_parameters (JSONField)
+ * 
+ * ProjectGIS:
+ * - id, project_id, shapefile_id, design_data (JSONField)
+ * - hydraulic_design (JSONField), boq_data (JSONField)
+ * 
+ * REQUIRED DJANGO PACKAGES:
+ * - django-rest-framework
+ * - django.contrib.gis (GeoDjango)
+ * - gdal, geos, proj (spatial libraries)
+ * - django-storages (for file handling)
+ */
 
 // Fix for default markers in React Leaflet
 import L from 'leaflet';
@@ -25,19 +77,109 @@ L.Icon.Default.mergeOptions({
 (window as any).L = L;
 
 const GISPlanning = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [selectedZone, setSelectedZone] = useState<Zone | null>(null);
   const [zones, setZones] = useState<Zone[]>([]);
   const [activeLayer, setActiveLayer] = useState('satellite');
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('planning');
+  const [isLoading, setIsLoading] = useState(false);
+  const [existingProjects, setExistingProjects] = useState<any[]>([]);
   const [formData, setFormData] = useState<ZoneFormData>({
     name: '',
     irrigationType: 'Micro-drip',
     cropType: '',
     status: 'Planned' as 'Planned' | 'Active' | 'Completed'
   });
-  
-  const { toast } = useToast();
+
+  useEffect(() => {
+    loadExistingProjects();
+    loadProjectZones();
+  }, []);
+
+  /**
+   * Load existing irrigation projects for map overlay
+   * TODO: Replace with actual Django API call
+   */
+  const loadExistingProjects = async () => {
+    try {
+      // TODO: Replace with actual API call
+      // const response = await fetch('/api/gis/existing-projects/', {
+      //   headers: {
+      //     'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      //   },
+      // });
+      // const data = await response.json();
+      // setExistingProjects(data.results);
+      
+      console.log('Loading existing projects for map overlay...');
+    } catch (error) {
+      console.error('Error loading existing projects:', error);
+    }
+  };
+
+  /**
+   * Load project zones from Django API
+   * TODO: Replace with actual Django API call
+   */
+  const loadProjectZones = async () => {
+    try {
+      setIsLoading(true);
+      
+      // TODO: Replace with actual API call
+      // const projectId = 'current-project-id'; // Get from route params
+      // const response = await fetch(`/api/projects/${projectId}/zones/`, {
+      //   headers: {
+      //     'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      //   },
+      // });
+      // const data = await response.json();
+      // setZones(data.results);
+      
+      // Mock data for development
+      setZones(sampleZones);
+    } catch (error) {
+      console.error('Error loading zones:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /**
+   * Save zone to Django API
+   * TODO: Replace with actual Django API call
+   */
+  const saveZoneToAPI = async (zoneData: Zone) => {
+    try {
+      const projectId = 'current-project-id'; // Get from route params
+      
+      // TODO: Replace with actual API call
+      // const response = await fetch(`/api/projects/${projectId}/zones/`, {
+      //   method: 'POST',
+      //   headers: {
+      //     'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify({
+      //     name: zoneData.name,
+      //     geometry: zoneData.layer ? zoneData.layer.toGeoJSON() : null,
+      //     area: zoneData.area,
+      //     irrigation_type: zoneData.irrigationType,
+      //     crop_type: zoneData.cropType,
+      //     status: zoneData.status,
+      //   }),
+      // });
+      // const savedZone = await response.json();
+      // return savedZone;
+      
+      console.log('Saving zone to API:', zoneData);
+      return zoneData;
+    } catch (error) {
+      console.error('Error saving zone:', error);
+      throw error;
+    }
+  };
 
   useEffect(() => {
     setZones(sampleZones);
@@ -118,29 +260,124 @@ const GISPlanning = () => {
     setIsEditing(false);
   };
 
-  const handleExport = () => {
-    handleExportZones(zones);
-    toast({
-      title: "Export Complete",
-      description: "Scheme data has been exported successfully.",
-    });
+  /**
+   * Export zones as shapefile via Django API
+   * TODO: Replace with actual Django API call
+   */
+  const handleExport = async () => {
+    try {
+      setIsLoading(true);
+      
+      // TODO: Replace with actual API call
+      // const response = await fetch('/api/gis/export-shapefile/', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify({
+      //     zones: zones.map(zone => ({
+      //       name: zone.name,
+      //       geometry: zone.layer ? zone.layer.toGeoJSON() : null,
+      //       properties: {
+      //         area: zone.area,
+      //         irrigation_type: zone.irrigationType,
+      //         crop_type: zone.cropType,
+      //         status: zone.status,
+      //       }
+      //     }))
+      //   }),
+      // });
+      // const data = await response.json();
+      // window.open(data.download_url, '_blank');
+      
+      // Fallback to client-side export for development
+      handleExportZones(zones);
+      
+      toast({
+        title: "Export Complete",
+        description: "Scheme data has been exported successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Export Failed",
+        description: "Failed to export shapefile.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
+  /**
+   * Handle shapefile upload to Django API
+   * TODO: Replace with actual Django API call
+   */
   const handleUpload = () => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = '.zip,.shp,.dbf,.shx';
-    input.onchange = (e: any) => {
-      const file = e.target.files[0];
-      if (file) {
-        toast({
-          title: 'Shapefile Selected',
-          description: `File: ${file.name}`,
-        });
-        // TODO: handle file upload logic here
+    input.accept = '.zip,.shp,.dbf,.shx,.prj';
+    input.multiple = true;
+    input.onchange = async (e: any) => {
+      const files = Array.from(e.target.files) as File[];
+      if (files.length > 0) {
+        await uploadShapefile(files);
       }
     };
     input.click();
+  };
+
+  /**
+   * Upload shapefile to Django API
+   * TODO: Replace with actual Django API call
+   */
+  const uploadShapefile = async (files: File[]) => {
+    try {
+      setIsLoading(true);
+      
+      const formData = new FormData();
+      files.forEach((file) => {
+        formData.append('files', file);
+      });
+      
+      // TODO: Replace with actual API call
+      // const response = await fetch('/api/shapefiles/upload/', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      //   },
+      //   body: formData,
+      // });
+      // const data = await response.json();
+      // 
+      // // Load the uploaded shapefile features into the map
+      // if (data.features) {
+      //   // Process GeoJSON features and add to map
+      //   const newZones = data.features.map((feature: any) => ({
+      //     id: Date.now() + Math.random(),
+      //     name: feature.properties.name || 'Imported Zone',
+      //     area: feature.properties.area || 0,
+      //     irrigationType: 'Micro-drip',
+      //     cropType: feature.properties.crop || '',
+      //     status: 'Planned',
+      //     geometry: feature.geometry,
+      //   }));
+      //   setZones([...zones, ...newZones]);
+      // }
+      
+      toast({
+        title: 'Shapefile Uploaded',
+        description: `Successfully uploaded ${files.length} files`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Upload Failed',
+        description: 'Failed to upload shapefile. Please check file format.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleGenerateDesign = () => {
