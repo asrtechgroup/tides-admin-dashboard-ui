@@ -1,961 +1,441 @@
-
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { FileText, Calculator, Download, Eye, Edit, Trash2, Plus } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
-
-/**
- * DJANGO API INTEGRATION POINTS FOR BOQ BUILDER:
- * 
- * 1. GET /api/existing-projects/ - Fetch existing irrigation projects for BOQ analysis
- *    - Headers: Authorization: Bearer {token}
- *    - Query params: location, irrigation_type, status
- *    - Response: { results: ExistingProject[], count: number }
- * 
- * 2. GET /api/materials/ - Fetch materials database with current prices
- *    - Response: { results: Material[], count: number }
- * 
- * 3. GET /api/technologies/ - Fetch irrigation technologies with specifications
- *    - Response: { results: Technology[], count: number }
- * 
- * 4. POST /api/boq-analysis/ - Generate BOQ for existing project
- *    - Body: { project_id, materials, technologies, labor_rates }
- *    - Response: { boq_items: BOQItem[], total_cost: number }
- * 
- * 5. GET /api/cost-database/ - Fetch cost database for calculations
- *    - Response: { materials: {}, equipment: {}, labor: {} }
- * 
- * 6. POST /api/boq-export/ - Export BOQ document
- *    - Body: { boq_items, project_info, format: 'pdf'|'excel' }
- *    - Response: { download_url: string }
- * 
- * Models Required:
- * 
- * ExistingProject:
- * - id, name, location, irrigation_type, area, status
- * - construction_date, materials_used (JSONField)
- * - technologies_used (JSONField), actual_cost
- * 
- * Material:
- * - id, name, category, unit, current_price, specifications
- * - supplier, last_updated, region_specific_price (JSONField)
- * 
- * Technology:
- * - id, name, type, efficiency, specifications (JSONField)
- * - cost_per_unit, installation_cost, maintenance_cost
- * 
- * BOQAnalysis:
- * - id, existing_project_id, analyzed_by, analysis_date
- * - boq_data (JSONField), total_cost, cost_per_hectare
- */
-
-interface Project {
-  id: string;
-  name: string;
-  area: number;
-  irrigationType: string;
-  zones: number;
-  status: 'Designed' | 'Under Review' | 'Approved';
-  cropType: string;
-  designDate: string;
-}
-
-interface BOQItem {
-  id: string;
-  category: string;
-  description: string;
-  specification: string;
-  quantity: number;
-  unit: string;
-  rate: number;
-  amount: number;
-}
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { CalendarDays, MapPin, Calculator, Download, Plus, Search, Filter, Loader2 } from 'lucide-react';
+import { toast } from "sonner";
+import { boqAPI, handleAPIError } from '@/services/api';
 
 const BOQBuilder = () => {
-  const { toast } = useToast();
-  const { user } = useAuth();
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [boqItems, setBOQItems] = useState<BOQItem[]>([]);
-  const [editingItem, setEditingItem] = useState<BOQItem | null>(null);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [materialsDatabase, setMaterialsDatabase] = useState<any>({});
-  const [technologiesDatabase, setTechnologiesDatabase] = useState<any>({});
-  const [newItem, setNewItem] = useState<Partial<BOQItem>>({
-    category: 'Materials',
-    description: '',
-    specification: '',
-    quantity: 0,
-    unit: 'nos',
-    rate: 0
-  });
+  const [selectedProject, setSelectedProject] = useState<any>(null);
+  const [existingProjects, setExistingProjects] = useState<any[]>([]);
+  const [materials, setMaterials] = useState<any[]>([]);
+  const [technologies, setTechnologies] = useState<any[]>([]);
+  const [boqItems, setBoqItems] = useState<any[]>([]);
+  const [boqAnalyses, setBoqAnalyses] = useState<any[]>([]);
+  const [costAnalysis, setCostAnalysis] = useState<any>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState('all');
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
+  // Load data on component mount
   useEffect(() => {
-    fetchMaterialsDatabase();
-    fetchTechnologiesDatabase();
+    loadInitialData();
   }, []);
 
-  /**
-   * Fetch materials database with current prices from Django API
-   * TODO: Replace with actual Django API call
-   */
-  const fetchMaterialsDatabase = async () => {
+  const loadInitialData = async () => {
     try {
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/materials/', {
-      //   headers: {
-      //     'Authorization': `Bearer ${localStorage.getItem('token')}`,
-      //   },
-      // });
-      // const data = await response.json();
-      // setMaterialsDatabase(data.results);
-      
-      // Mock data for development
-      console.log('Fetching materials database...');
-    } catch (error) {
-      console.error('Error fetching materials:', error);
-    }
-  };
+      setLoading(true);
+      const [projectsData, materialsData, technologiesData, analysesData, costData] = await Promise.all([
+        boqAPI.getExistingProjects(),
+        boqAPI.getMaterials(),
+        boqAPI.getTechnologies(),
+        boqAPI.getBOQAnalyses(),
+        boqAPI.getCostAnalysis(),
+      ]);
 
-  /**
-   * Fetch technologies database from Django API
-   * TODO: Replace with actual Django API call
-   */
-  const fetchTechnologiesDatabase = async () => {
-    try {
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/technologies/', {
-      //   headers: {
-      //     'Authorization': `Bearer ${localStorage.getItem('token')}`,
-      //   },
-      // });
-      // const data = await response.json();
-      // setTechnologiesDatabase(data.results);
-      
-      // Mock data for development
-      console.log('Fetching technologies database...');
+      setExistingProjects(projectsData.results || projectsData);
+      setMaterials(materialsData.results || materialsData);
+      setTechnologies(technologiesData.results || technologiesData);
+      setBoqAnalyses(analysesData.results || analysesData);
+      setCostAnalysis(costData);
     } catch (error) {
-      console.error('Error fetching technologies:', error);
-    }
-  };
-
-  /**
-   * Generate BOQ analysis for existing project using Django API
-   * TODO: Replace with actual Django API call
-   */
-  const generateBOQAnalysis = async (projectId: string, materials: any[], technologies: any[]) => {
-    try {
-      setIsLoading(true);
-      
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/boq-analysis/', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Authorization': `Bearer ${localStorage.getItem('token')}`,
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify({
-      //     project_id: projectId,
-      //     materials: materials,
-      //     technologies: technologies,
-      //   }),
-      // });
-      // const data = await response.json();
-      // setBOQItems(data.boq_items);
-      
-      toast({
-        title: "BOQ Analysis Complete",
-        description: "Cost analysis has been generated based on materials and technologies database",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to generate BOQ analysis",
-        variant: "destructive"
-      });
+      toast.error('Failed to load data: ' + handleAPIError(error));
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  /**
-   * Export BOQ document via Django API
-   * TODO: Replace with actual Django API call
-   */
-  const exportBOQ = async (format: 'pdf' | 'excel' = 'pdf') => {
-    try {
-      setIsLoading(true);
-      
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/boq-export/', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Authorization': `Bearer ${localStorage.getItem('token')}`,
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify({
-      //     boq_items: boqItems,
-      //     project_info: selectedProject,
-      //     format: format,
-      //   }),
-      // });
-      // const data = await response.json();
-      // window.open(data.download_url, '_blank');
-      
-      toast({
-        title: "BOQ Exported",
-        description: `BOQ document has been exported as ${format.toUpperCase()}`,
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to export BOQ",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
+  const handleAddMaterial = (material: any) => {
+    const newItem = {
+      id: Date.now().toString(),
+      description: material.name,
+      unit: material.unit,
+      quantity: 1,
+      rate: material.current_price || material.regional_price || 0,
+      amount: material.current_price || material.regional_price || 0
+    };
+    setBoqItems([...boqItems, newItem]);
+    toast.success(`${material.name} added to BOQ`);
   };
 
-  // Mock project data
-  const projects: Project[] = [
-    {
-      id: '1',
-      name: 'Mwanza Rice Irrigation Scheme',
-      area: 250,
-      irrigationType: 'Surface Irrigation',
-      zones: 5,
-      status: 'Designed',
-      cropType: 'Rice, Maize',
-      designDate: '2024-06-15'
-    },
-    {
-      id: '2',
-      name: 'Arusha Horticultural Project',
-      area: 120,
-      irrigationType: 'Drip Irrigation',
-      zones: 8,
-      status: 'Under Review',
-      cropType: 'Vegetables, Fruits',
-      designDate: '2024-06-10'
-    },
-    {
-      id: '3',
-      name: 'Dodoma Cotton Scheme',
-      area: 180,
-      irrigationType: 'Sprinkler',
-      zones: 6,
-      status: 'Designed',
-      cropType: 'Cotton, Sunflower',
-      designDate: '2024-06-08'
-    }
-  ];
-
-  useEffect(() => {
-    if (selectedProject) {
-      generateBOQFromProject(selectedProject);
-    }
-  }, [selectedProject]);
-
-  const generateBOQFromProject = (project: Project) => {
-    const baseItems: BOQItem[] = [];
-    let itemId = 1;
-
-    // Generate BOQ based on irrigation type and area
-    if (project.irrigationType === 'Drip Irrigation') {
-      baseItems.push(
-        {
-          id: (itemId++).toString(),
-          category: 'Earth Work',
-          description: 'Excavation for main pipeline',
-          specification: 'Manual excavation 0.8m deep',
-          quantity: Math.round(project.area * 2),
-          unit: 'meter',
-          rate: 25,
-          amount: 0
-        },
-        {
-          id: (itemId++).toString(),
-          category: 'Materials',
-          description: 'HDPE Main Pipeline',
-          specification: '110mm PN 6 HDPE pipe',
-          quantity: Math.round(project.area * 4),
-          unit: 'meter',
-          rate: 45,
-          amount: 0
-        },
-        {
-          id: (itemId++).toString(),
-          category: 'Materials',
-          description: 'Sub-main Pipeline',
-          specification: '75mm PN 6 HDPE pipe',
-          quantity: Math.round(project.area * 8),
-          unit: 'meter',
-          rate: 32,
-          amount: 0
-        },
-        {
-          id: (itemId++).toString(),
-          category: 'Materials',
-          description: 'Lateral Lines',
-          specification: '16mm PE pipe with emitters',
-          quantity: Math.round(project.area * 150),
-          unit: 'meter',
-          rate: 12,
-          amount: 0
-        },
-        {
-          id: (itemId++).toString(),
-          category: 'Equipment',
-          description: 'Filtration System',
-          specification: 'Sand + Screen filters',
-          quantity: project.zones,
-          unit: 'set',
-          rate: 25000,
-          amount: 0
-        },
-        {
-          id: (itemId++).toString(),
-          category: 'Equipment',
-          description: 'Control Valves',
-          specification: 'Hydraulic control valves',
-          quantity: project.zones * 2,
-          unit: 'nos',
-          rate: 1500,
-          amount: 0
-        }
-      );
-    } else if (project.irrigationType === 'Surface Irrigation') {
-      baseItems.push(
-        {
-          id: (itemId++).toString(),
-          category: 'Earth Work',
-          description: 'Main Canal Excavation',
-          specification: '2.5m top width, 1.8m depth',
-          quantity: Math.round(project.area * 0.8),
-          unit: 'meter',
-          rate: 180,
-          amount: 0
-        },
-        {
-          id: (itemId++).toString(),
-          category: 'Earth Work',
-          description: 'Secondary Canal Excavation',
-          specification: '1.2m top width, 0.8m depth',
-          quantity: Math.round(project.area * 2.5),
-          unit: 'meter',
-          rate: 120,
-          amount: 0
-        },
-        {
-          id: (itemId++).toString(),
-          category: 'Materials',
-          description: 'Canal Lining',
-          specification: 'Concrete lining 75mm thick',
-          quantity: Math.round(project.area * 1.5),
-          unit: 'sqm',
-          rate: 85,
-          amount: 0
-        },
-        {
-          id: (itemId++).toString(),
-          category: 'Equipment',
-          description: 'Outlet Structures',
-          specification: 'Gated outlets with measuring',
-          quantity: Math.round(project.area / 5),
-          unit: 'nos',
-          rate: 2500,
-          amount: 0
-        }
-      );
-    } else if (project.irrigationType === 'Sprinkler') {
-      baseItems.push(
-        {
-          id: (itemId++).toString(),
-          category: 'Materials',
-          description: 'Main Pipeline',
-          specification: '100mm PVC pipe',
-          quantity: Math.round(project.area * 3),
-          unit: 'meter',
-          rate: 38,
-          amount: 0
-        },
-        {
-          id: (itemId++).toString(),
-          category: 'Materials',
-          description: 'Sub-main Pipeline',
-          specification: '75mm PVC pipe',
-          quantity: Math.round(project.area * 6),
-          unit: 'meter',
-          rate: 28,
-          amount: 0
-        },
-        {
-          id: (itemId++).toString(),
-          category: 'Equipment',
-          description: 'Sprinkler Heads',
-          specification: 'Impact sprinklers 15m radius',
-          quantity: Math.round(project.area * 1.2),
-          unit: 'nos',
-          rate: 450,
-          amount: 0
-        },
-        {
-          id: (itemId++).toString(),
-          category: 'Equipment',
-          description: 'Riser Pipes',
-          specification: '25mm galvanized pipes',
-          quantity: Math.round(project.area * 1.2),
-          unit: 'nos',
-          rate: 180,
-          amount: 0
-        }
-      );
-    }
-
-    // Common items for all irrigation types
-    baseItems.push(
-      {
-        id: (itemId++).toString(),
-        category: 'Labor',
-        description: 'Installation Labor',
-        specification: 'Skilled technicians',
-        quantity: Math.round(project.area * 0.5),
-        unit: 'days',
-        rate: 25000,
-        amount: 0
-      },
-      {
-        id: (itemId++).toString(),
-        category: 'Labor',
-        description: 'Unskilled Labor',
-        specification: 'General laborers',
-        quantity: Math.round(project.area * 1.5),
-        unit: 'days',
-        rate: 15000,
-        amount: 0
-      }
-    );
-
-    // Calculate amounts
-    const itemsWithAmounts = baseItems.map(item => ({
-      ...item,
-      amount: item.quantity * item.rate
-    }));
-
-    setBOQItems(itemsWithAmounts);
-    
-    toast({
-      title: "BOQ Generated",
-      description: `Generated ${itemsWithAmounts.length} items for ${project.name}`,
-    });
+  const handleAddTechnology = (technology: any) => {
+    const newItem = {
+      id: Date.now().toString(),
+      description: `${technology.name} (${technology.technology_type})`,
+      unit: 'set',
+      quantity: 1,
+      rate: technology.cost_per_unit || 0,
+      amount: technology.cost_per_unit || 0,
+      technology_type: technology.technology_type,
+      efficiency: technology.efficiency
+    };
+    setBoqItems([...boqItems, newItem]);
+    toast.success(`${technology.name} added to BOQ`);
   };
 
-  const handleAddItem = () => {
-    if (!newItem.description || !newItem.quantity || !newItem.rate) {
-      toast({
-        title: "Error",
-        description: "Please fill in all required fields",
-        variant: "destructive"
-      });
+  const handleUpdateQuantity = (id: string, quantity: number) => {
+    setBoqItems(boqItems.map(item => 
+      item.id === id 
+        ? { ...item, quantity, amount: quantity * item.rate }
+        : item
+    ));
+  };
+
+  const handleRemoveItem = (id: string) => {
+    setBoqItems(boqItems.filter(item => item.id !== id));
+  };
+
+  const calculateTotal = () => {
+    return boqItems.reduce((total, item) => total + item.amount, 0);
+  };
+
+  const handleSaveBOQAnalysis = async () => {
+    if (!selectedProject) {
+      toast.error('Please select a project first');
       return;
     }
 
-    const item: BOQItem = {
-      id: (Date.now()).toString(),
-      category: newItem.category || 'Materials',
-      description: newItem.description,
-      specification: newItem.specification || '',
-      quantity: newItem.quantity || 0,
-      unit: newItem.unit || 'nos',
-      rate: newItem.rate || 0,
-      amount: (newItem.quantity || 0) * (newItem.rate || 0)
-    };
+    try {
+      setSubmitting(true);
+      const analysisData = {
+        existing_project: selectedProject.id,
+        boq_data: boqItems,
+        total_cost: calculateTotal(),
+        cost_per_hectare: selectedProject.area ? calculateTotal() / selectedProject.area : 0,
+      };
 
-    setBOQItems([...boqItems, item]);
-    setNewItem({
-      category: 'Materials',
-      description: '',
-      specification: '',
-      quantity: 0,
-      unit: 'nos',
-      rate: 0
-    });
-    setShowAddForm(false);
-    
-    toast({
-      title: "Item Added",
-      description: "BOQ item has been added successfully",
-    });
+      const result = await boqAPI.createBOQAnalysis(analysisData);
+      setBoqAnalyses([result, ...boqAnalyses]);
+      toast.success('BOQ analysis saved successfully');
+      
+      // Reset form
+      setBoqItems([]);
+      setSelectedProject(null);
+    } catch (error) {
+      toast.error('Failed to save BOQ analysis: ' + handleAPIError(error));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleEditItem = (item: BOQItem) => {
-    setEditingItem(item);
+  const handleExportBOQ = async (analysisId: string, format: 'pdf' | 'excel') => {
+    try {
+      const result = await boqAPI.exportBOQ(analysisId, format);
+      toast.success(result.message || `BOQ exported in ${format} format`);
+      
+      // Trigger download if URL is provided
+      if (result.download_url) {
+        window.open(result.download_url, '_blank');
+      }
+    } catch (error) {
+      toast.error('Failed to export BOQ: ' + handleAPIError(error));
+    }
   };
 
-  const handleUpdateItem = () => {
-    if (!editingItem) return;
+  const filteredMaterials = materials.filter(material => 
+    material.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    (filterType === 'all' || material.category?.name?.toLowerCase() === filterType)
+  );
 
-    const updatedItems = boqItems.map(item => 
-      item.id === editingItem.id 
-        ? { ...editingItem, amount: editingItem.quantity * editingItem.rate }
-        : item
+  const filteredProjects = existingProjects.filter(project =>
+    project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    project.location.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredTechnologies = technologies.filter(tech =>
+    tech.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    (filterType === 'all' || tech.technology_type === filterType)
+  );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="flex items-center space-x-2">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span>Loading BOQ Builder...</span>
+        </div>
+      </div>
     );
-    
-    setBOQItems(updatedItems);
-    setEditingItem(null);
-    
-    toast({
-      title: "Item Updated",
-      description: "BOQ item has been updated successfully",
-    });
-  };
-
-  const handleDeleteItem = (itemId: string) => {
-    setBOQItems(boqItems.filter(item => item.id !== itemId));
-    toast({
-      title: "Item Deleted",
-      description: "BOQ item has been removed",
-    });
-  };
-
-  const totalCost = boqItems.reduce((sum, item) => sum + item.amount, 0);
-  const costPerHa = selectedProject ? Math.round(totalCost / selectedProject.area) : 0;
-
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case 'Earth Work': return 'bg-amber-100 text-amber-800';
-      case 'Materials': return 'bg-blue-100 text-blue-800';
-      case 'Equipment': return 'bg-green-100 text-green-800';
-      case 'Labor': return 'bg-purple-100 text-purple-800';
-      default: return 'bg-stone-100 text-stone-800';
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Designed': return 'bg-green-100 text-green-800';
-      case 'Under Review': return 'bg-yellow-100 text-yellow-800';
-      case 'Approved': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-stone-100 text-stone-800';
-    }
-  };
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="container mx-auto p-6 space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-stone-800">BOQ Builder</h1>
-          <p className="text-stone-600 mt-1">Analyze designed irrigation projects and generate comprehensive BOQ</p>
-        </div>
-        <div className="flex space-x-2">
-          {selectedProject && (
-            <>
-              <Button variant="outline" onClick={() => setShowAddForm(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Add Item
-              </Button>
-              <Button className="bg-emerald-600 hover:bg-emerald-700">
-                <Download className="w-4 h-4 mr-2" />
-                Export BOQ
-              </Button>
-            </>
-          )}
+          <h1 className="text-3xl font-bold">BOQ Builder</h1>
+          <p className="text-muted-foreground">
+            Analyze costs for existing irrigation projects and generate Bills of Quantities
+          </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Project Selection */}
-        <Card className="border-0 shadow-md">
-          <CardHeader>
-            <CardTitle className="text-lg">Select Project</CardTitle>
-            <CardDescription>Choose a designed project to analyze</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label>Available Projects</Label>
-              <Select 
-                value={selectedProject?.id || ''} 
-                onValueChange={(value) => {
-                  const project = projects.find(p => p.id === value);
-                  setSelectedProject(project || null);
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select project" />
-                </SelectTrigger>
-                <SelectContent>
-                  {projects.map((project) => (
-                    <SelectItem key={project.id} value={project.id}>
-                      {project.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+      <Tabs defaultValue="projects" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="projects">Existing Projects</TabsTrigger>
+          <TabsTrigger value="materials">Materials Database</TabsTrigger>
+          <TabsTrigger value="technologies">Technologies</TabsTrigger>
+          <TabsTrigger value="boq">BOQ Builder</TabsTrigger>
+        </TabsList>
 
-            {selectedProject && (
-              <div className="space-y-3 pt-4 border-t">
-                <h4 className="font-medium">Project Details</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-stone-600">Area:</span>
-                    <span className="font-medium">{selectedProject.area} ha</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-stone-600">Type:</span>
-                    <span className="font-medium">{selectedProject.irrigationType}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-stone-600">Zones:</span>
-                    <span className="font-medium">{selectedProject.zones}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-stone-600">Crops:</span>
-                    <span className="font-medium">{selectedProject.cropType}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-stone-600">Status:</span>
-                    <Badge className={getStatusColor(selectedProject.status)}>
-                      {selectedProject.status}
+        <TabsContent value="projects" className="space-y-4">
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <Input
+                placeholder="Search projects..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <Button>
+              <Plus className="w-4 h-4 mr-2" />
+              Add New Project
+            </Button>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {filteredProjects.map((project) => (
+              <Card 
+                key={project.id} 
+                className={`cursor-pointer transition-colors ${
+                  selectedProject?.id === project.id ? 'bg-primary/5 border-primary' : ''
+                }`}
+                onClick={() => setSelectedProject(project)}
+              >
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle className="text-lg">{project.name}</CardTitle>
+                      <CardDescription>{project.irrigation_type}</CardDescription>
+                    </div>
+                    <Badge variant={project.status === 'Completed' ? 'default' : 'secondary'}>
+                      {project.status}
                     </Badge>
                   </div>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2 text-sm">
+                    <p className="text-muted-foreground">
+                      <MapPin className="inline-block w-4 h-4 mr-1" />
+                      {project.location}
+                    </p>
+                    <p className="text-muted-foreground">
+                      <CalendarDays className="inline-block w-4 h-4 mr-1" />
+                      {new Date(project.construction_date).toLocaleDateString()}
+                    </p>
+                    <p className="font-semibold">
+                      Area: {project.area} hectares
+                    </p>
+                    <p className="font-semibold text-lg">
+                      Total Cost: TSh {project.actual_cost.toLocaleString()}
+                    </p>
+                    <p className="text-muted-foreground">
+                      Cost per hectare: TSh {(project.actual_cost / project.area).toLocaleString()}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
 
-        {/* BOQ Content */}
-        <div className="lg:col-span-2 space-y-6">
-          {!selectedProject ? (
-            <Card className="border-0 shadow-md">
-              <CardContent className="flex items-center justify-center py-16">
-                <div className="text-center">
-                  <FileText className="w-16 h-16 text-stone-400 mx-auto mb-4" />
-                  <h3 className="text-xl font-medium text-stone-800 mb-2">No Project Selected</h3>
-                  <p className="text-stone-600">Select a designed project to generate and analyze BOQ</p>
+        <TabsContent value="materials" className="space-y-4">
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <Input
+                placeholder="Search materials..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <Select value={filterType} onValueChange={setFilterType}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filter by category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {[...new Set(materials.map(m => m.category?.name).filter(Boolean))].map(category => (
+                  <SelectItem key={category} value={category?.toLowerCase()}>
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid gap-4">
+            {filteredMaterials.map((material) => (
+              <Card key={material.id} className="p-4">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <h4 className="font-medium">{material.name}</h4>
+                    <p className="text-sm text-muted-foreground">{material.category?.name}</p>
+                    <p className="font-semibold">
+                      TSh {(material.current_price || material.regional_price || 0).toLocaleString()} per {material.unit}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{material.specifications}</p>
+                  </div>
+                  <Button 
+                    size="sm" 
+                    onClick={() => handleAddMaterial(material)}
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    Add
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="technologies" className="space-y-4">
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <Input
+                placeholder="Search technologies..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <Select value={filterType} onValueChange={setFilterType}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filter by type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="surface">Surface Irrigation</SelectItem>
+                <SelectItem value="pressurized">Pressurized</SelectItem>
+                <SelectItem value="subsurface">Subsurface</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid gap-4">
+            {filteredTechnologies.map((technology) => (
+              <Card key={technology.id} className="p-4">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <h4 className="font-medium">{technology.name}</h4>
+                    <p className="text-sm text-muted-foreground capitalize">{technology.technology_type}</p>
+                    <p className="font-semibold">
+                      TSh {technology.cost_per_unit?.toLocaleString()} per unit
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Efficiency: {technology.efficiency}%
+                    </p>
+                    {technology.specifications && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {JSON.stringify(technology.specifications)}
+                      </p>
+                    )}
+                  </div>
+                  <Button 
+                    size="sm" 
+                    onClick={() => handleAddTechnology(technology)}
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    Add
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="boq" className="space-y-4">
+          {selectedProject ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>BOQ for {selectedProject.name}</CardTitle>
+                <CardDescription>
+                  Location: {selectedProject.location} | Area: {selectedProject.area} hectares
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {boqItems.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse border border-border">
+                        <thead>
+                          <tr className="bg-muted">
+                            <th className="border border-border p-2 text-left">Description</th>
+                            <th className="border border-border p-2 text-left">Unit</th>
+                            <th className="border border-border p-2 text-left">Quantity</th>
+                            <th className="border border-border p-2 text-left">Rate (TSh)</th>
+                            <th className="border border-border p-2 text-left">Amount (TSh)</th>
+                            <th className="border border-border p-2 text-left">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {boqItems.map((item) => (
+                            <tr key={item.id}>
+                              <td className="border border-border p-2">{item.description}</td>
+                              <td className="border border-border p-2">{item.unit}</td>
+                              <td className="border border-border p-2">
+                                <Input
+                                  type="number"
+                                  value={item.quantity}
+                                  onChange={(e) => handleUpdateQuantity(item.id, Number(e.target.value))}
+                                  className="w-20"
+                                />
+                              </td>
+                              <td className="border border-border p-2">{item.rate.toLocaleString()}</td>
+                              <td className="border border-border p-2">{item.amount.toLocaleString()}</td>
+                              <td className="border border-border p-2">
+                                <Button 
+                                  size="sm" 
+                                  variant="destructive"
+                                  onClick={() => handleRemoveItem(item.id)}
+                                >
+                                  Remove
+                                </Button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <p className="text-center text-muted-foreground py-8">
+                      No items added yet. Go to Materials or Technologies tab to add items.
+                    </p>
+                  )}
+
+                  <div className="flex justify-between items-center">
+                    <div className="text-2xl font-bold">
+                      Total: TSh {calculateTotal().toLocaleString()}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        onClick={handleSaveBOQAnalysis}
+                        disabled={submitting || boqItems.length === 0 || !selectedProject}
+                      >
+                        {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                        Save Analysis
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
           ) : (
-            <Card className="border-0 shadow-md">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-lg">Bill of Quantities</CardTitle>
-                    <CardDescription>{selectedProject.name} - {boqItems.length} items</CardDescription>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-emerald-600">
-                      TSH {totalCost.toLocaleString()}
-                    </div>
-                    <div className="text-sm text-stone-600">
-                      TSH {costPerHa.toLocaleString()}/ha
-                    </div>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="border rounded-lg overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-24">Category</TableHead>
-                        <TableHead>Description</TableHead>
-                        <TableHead className="w-16">Qty</TableHead>
-                        <TableHead className="w-16">Unit</TableHead>
-                        <TableHead className="w-20">Rate</TableHead>
-                        <TableHead className="w-24">Amount</TableHead>
-                        <TableHead className="w-20">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {boqItems.map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell>
-                            <Badge className={getCategoryColor(item.category)}>
-                              {item.category}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div>
-                              <div className="font-medium text-sm">{item.description}</div>
-                              {item.specification && (
-                                <div className="text-xs text-stone-500">{item.specification}</div>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-sm">{item.quantity}</TableCell>
-                          <TableCell className="text-sm">{item.unit}</TableCell>
-                          <TableCell className="text-sm">TSH {item.rate.toLocaleString()}</TableCell>
-                          <TableCell className="text-sm font-medium">TSH {item.amount.toLocaleString()}</TableCell>
-                          <TableCell>
-                            <div className="flex space-x-1">
-                              <Button size="sm" variant="outline" onClick={() => handleEditItem(item)}>
-                                <Edit className="w-3 h-3" />
-                              </Button>
-                              <Button size="sm" variant="outline" onClick={() => handleDeleteItem(item.id)}>
-                                <Trash2 className="w-3 h-3" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-16">
+                <Calculator className="w-16 h-16 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Select a Project</h3>
+                <p className="text-muted-foreground text-center max-w-md">
+                  Choose an existing project from the Projects tab to start building your BOQ analysis.
+                </p>
               </CardContent>
             </Card>
           )}
-
-          {/* Add Item Form */}
-          {showAddForm && (
-            <Card className="border-0 shadow-md">
-              <CardHeader>
-                <CardTitle className="text-lg">Add BOQ Item</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Category</Label>
-                    <Select 
-                      value={newItem.category} 
-                      onValueChange={(value) => setNewItem({...newItem, category: value})}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Earth Work">Earth Work</SelectItem>
-                        <SelectItem value="Materials">Materials</SelectItem>
-                        <SelectItem value="Equipment">Equipment</SelectItem>
-                        <SelectItem value="Labor">Labor</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Unit</Label>
-                    <Select 
-                      value={newItem.unit} 
-                      onValueChange={(value) => setNewItem({...newItem, unit: value})}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="nos">nos</SelectItem>
-                        <SelectItem value="meter">meter</SelectItem>
-                        <SelectItem value="sqm">sqm</SelectItem>
-                        <SelectItem value="cum">cum</SelectItem>
-                        <SelectItem value="kg">kg</SelectItem>
-                        <SelectItem value="days">days</SelectItem>
-                        <SelectItem value="set">set</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div>
-                  <Label>Description</Label>
-                  <Input 
-                    value={newItem.description || ''} 
-                    onChange={(e) => setNewItem({...newItem, description: e.target.value})}
-                    placeholder="Enter item description"
-                  />
-                </div>
-                <div>
-                  <Label>Specification</Label>
-                  <Input 
-                    value={newItem.specification || ''} 
-                    onChange={(e) => setNewItem({...newItem, specification: e.target.value})}
-                    placeholder="Enter specifications (optional)"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Quantity</Label>
-                    <Input 
-                      type="number" 
-                      value={newItem.quantity || ''} 
-                      onChange={(e) => setNewItem({...newItem, quantity: parseFloat(e.target.value) || 0})}
-                      placeholder="0"
-                    />
-                  </div>
-                  <div>
-                    <Label>Rate (TSH)</Label>
-                    <Input 
-                      type="number" 
-                      value={newItem.rate || ''} 
-                      onChange={(e) => setNewItem({...newItem, rate: parseFloat(e.target.value) || 0})}
-                      placeholder="0"
-                    />
-                  </div>
-                </div>
-                <div className="flex space-x-2">
-                  <Button onClick={handleAddItem} className="bg-emerald-600 hover:bg-emerald-700">
-                    Add Item
-                  </Button>
-                  <Button variant="outline" onClick={() => setShowAddForm(false)}>
-                    Cancel
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Edit Item Form */}
-          {editingItem && (
-            <Card className="border-0 shadow-md">
-              <CardHeader>
-                <CardTitle className="text-lg">Edit BOQ Item</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Category</Label>
-                    <Select 
-                      value={editingItem.category} 
-                      onValueChange={(value) => setEditingItem({...editingItem, category: value})}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Earth Work">Earth Work</SelectItem>
-                        <SelectItem value="Materials">Materials</SelectItem>
-                        <SelectItem value="Equipment">Equipment</SelectItem>
-                        <SelectItem value="Labor">Labor</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Unit</Label>
-                    <Select 
-                      value={editingItem.unit} 
-                      onValueChange={(value) => setEditingItem({...editingItem, unit: value})}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="nos">nos</SelectItem>
-                        <SelectItem value="meter">meter</SelectItem>
-                        <SelectItem value="sqm">sqm</SelectItem>
-                        <SelectItem value="cum">cum</SelectItem>
-                        <SelectItem value="kg">kg</SelectItem>
-                        <SelectItem value="days">days</SelectItem>
-                        <SelectItem value="set">set</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div>
-                  <Label>Description</Label>
-                  <Input 
-                    value={editingItem.description} 
-                    onChange={(e) => setEditingItem({...editingItem, description: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label>Specification</Label>
-                  <Input 
-                    value={editingItem.specification} 
-                    onChange={(e) => setEditingItem({...editingItem, specification: e.target.value})}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Quantity</Label>
-                    <Input 
-                      type="number" 
-                      value={editingItem.quantity} 
-                      onChange={(e) => setEditingItem({...editingItem, quantity: parseFloat(e.target.value) || 0})}
-                    />
-                  </div>
-                  <div>
-                    <Label>Rate (TSH)</Label>
-                    <Input 
-                      type="number" 
-                      value={editingItem.rate} 
-                      onChange={(e) => setEditingItem({...editingItem, rate: parseFloat(e.target.value) || 0})}
-                    />
-                  </div>
-                </div>
-                <div className="flex space-x-2">
-                  <Button onClick={handleUpdateItem} className="bg-emerald-600 hover:bg-emerald-700">
-                    Update Item
-                  </Button>
-                  <Button variant="outline" onClick={() => setEditingItem(null)}>
-                    Cancel
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-
-        {/* Cost Summary */}
-        <Card className="border-0 shadow-md">
-          <CardHeader>
-            <div className="flex items-center space-x-2">
-              <Calculator className="w-5 h-5 text-emerald-600" />
-              <CardTitle className="text-lg">Cost Analysis</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {selectedProject ? (
-              <>
-                <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-200">
-                  <div className="text-2xl font-bold text-emerald-800">
-                    TSH {totalCost.toLocaleString()}
-                  </div>
-                  <div className="text-sm text-emerald-600">Total Project Cost</div>
-                </div>
-                
-                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <div className="text-xl font-bold text-blue-800">
-                    TSH {costPerHa.toLocaleString()}/ha
-                  </div>
-                  <div className="text-sm text-blue-600">Cost per Hectare</div>
-                </div>
-
-                <div className="space-y-2">
-                  <h4 className="font-medium text-stone-800">Category Breakdown</h4>
-                  {['Earth Work', 'Materials', 'Equipment', 'Labor'].map(category => {
-                    const categoryTotal = boqItems
-                      .filter(item => item.category === category)
-                      .reduce((sum, item) => sum + item.amount, 0);
-                    const percentage = totalCost > 0 ? ((categoryTotal / totalCost) * 100).toFixed(1) : '0';
-                    
-                    return (
-                      <div key={category} className="flex justify-between items-center p-2 bg-stone-50 rounded">
-                        <span className="text-sm font-medium">{category}</span>
-                        <div className="text-right">
-                          <div className="text-sm font-medium">TSH {categoryTotal.toLocaleString()}</div>
-                          <div className="text-xs text-stone-500">{percentage}%</div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </>
-            ) : (
-              <div className="text-center py-8">
-                <Calculator className="w-12 h-12 text-stone-400 mx-auto mb-2" />
-                <p className="text-stone-600 text-sm">Select a project to view cost analysis</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

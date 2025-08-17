@@ -3,411 +3,367 @@
  * 
  * This file contains all the API calls to the Django backend.
  * Replace the base URL with your actual Django server URL.
- * 
- * DJANGO SETUP REQUIRED:
- * 
- * 1. Install required packages:
- *    - djangorestframework
- *    - django-cors-headers
- *    - django-storages (for file uploads)
- *    - django.contrib.gis (for GIS features)
- * 
- * 2. Add to INSTALLED_APPS:
- *    - 'rest_framework'
- *    - 'corsheaders'
- *    - 'django.contrib.gis'
- * 
- * 3. Configure CORS in settings.py:
- *    CORS_ALLOWED_ORIGINS = ["http://localhost:3000"]
- * 
- * 4. Add authentication:
- *    REST_FRAMEWORK = {
- *        'DEFAULT_AUTHENTICATION_CLASSES': [
- *            'rest_framework.authentication.TokenAuthentication',
- *        ]
- *    }
  */
 
-const API_BASE_URL = process.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+import axios from 'axios';
 
-interface ApiResponse<T> {
-  results: T[];
-  count: number;
-  next?: string;
-  previous?: string;
-}
+// Django API Integration
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
 
-class ApiService {
-  private getAuthHeaders() {
-    const token = localStorage.getItem('tides_token');
-    return {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    };
+// API Configuration
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Request interceptor to add auth token
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('auth_token');
+  if (token) {
+    config.headers.Authorization = `Token ${token}`;
   }
+  return config;
+});
 
-  // ===== AUTHENTICATION APIs =====
-  
-  /**
-   * Login user
-   * Django URL: POST /api/auth/login/
-   */
-  async login(email: string, password: string) {
-    const response = await fetch(`${API_BASE_URL}/auth/login/`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
-    return response.json();
+// Response interceptor for error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('user_data');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
   }
+);
 
+// Authentication API
+export const authAPI = {
   /**
-   * Get user profile
-   * Django URL: GET /api/auth/user/
+   * User login
+   * Django endpoint: POST /api/auth/login/
    */
-  async getUserProfile() {
-    const response = await fetch(`${API_BASE_URL}/auth/user/`, {
-      headers: this.getAuthHeaders(),
-    });
-    return response.json();
-  }
-
-  // ===== PROJECT MANAGEMENT APIs =====
-  
-  /**
-   * Get user's projects
-   * Django URL: GET /api/projects/
-   */
-  async getProjects(search?: string): Promise<ApiResponse<any>> {
-    const params = new URLSearchParams();
-    if (search) params.append('search', search);
+  login: async (credentials: { username: string; password: string }) => {
+    const response = await api.post('/auth/login/', credentials);
+    const { user, token } = response.data;
     
-    const response = await fetch(`${API_BASE_URL}/projects/?${params}`, {
-      headers: this.getAuthHeaders(),
-    });
-    return response.json();
-  }
-
-  /**
-   * Create new project
-   * Django URL: POST /api/projects/
-   */
-  async createProject(projectData: any) {
-    const response = await fetch(`${API_BASE_URL}/projects/`, {
-      method: 'POST',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(projectData),
-    });
-    return response.json();
-  }
-
-  /**
-   * Update project
-   * Django URL: PUT /api/projects/{id}/
-   */
-  async updateProject(projectId: string, projectData: any) {
-    const response = await fetch(`${API_BASE_URL}/projects/${projectId}/`, {
-      method: 'PUT',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(projectData),
-    });
-    return response.json();
-  }
-
-  /**
-   * Delete project
-   * Django URL: DELETE /api/projects/{id}/
-   */
-  async deleteProject(projectId: string) {
-    const response = await fetch(`${API_BASE_URL}/projects/${projectId}/`, {
-      method: 'DELETE',
-      headers: this.getAuthHeaders(),
-    });
-    return response.ok;
-  }
-
-  // ===== PROJECT WIZARD APIs =====
-  
-  /**
-   * Get project wizard data
-   * Django URL: GET /api/project-wizard/{id}/
-   */
-  async getProjectWizard(projectId: string) {
-    const response = await fetch(`${API_BASE_URL}/project-wizard/${projectId}/`, {
-      headers: this.getAuthHeaders(),
-    });
-    return response.json();
-  }
-
-  /**
-   * Save project wizard data
-   * Django URL: POST/PUT /api/project-wizard/
-   */
-  async saveProjectWizard(projectData: any, projectId?: string) {
-    const url = projectId 
-      ? `${API_BASE_URL}/project-wizard/${projectId}/`
-      : `${API_BASE_URL}/project-wizard/`;
+    // Store auth data
+    localStorage.setItem('auth_token', token);
+    localStorage.setItem('user_data', JSON.stringify(user));
     
-    const response = await fetch(url, {
-      method: projectId ? 'PUT' : 'POST',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(projectData),
-    });
-    return response.json();
-  }
+    return { user, token };
+  },
 
   /**
-   * Submit project for approval
-   * Django URL: POST /api/project-wizard/{id}/submit/
+   * User logout
+   * Django endpoint: POST /api/auth/logout/
    */
-  async submitProject(projectId: string, comments?: string) {
-    const response = await fetch(`${API_BASE_URL}/project-wizard/${projectId}/submit/`, {
-      method: 'POST',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify({ comments }),
-    });
-    return response.json();
-  }
-
-  // ===== MATERIALS & COST DATABASE APIs =====
-  
-  /**
-   * Get materials database
-   * Django URL: GET /api/materials/
-   */
-  async getMaterials(): Promise<ApiResponse<any>> {
-    const response = await fetch(`${API_BASE_URL}/materials/`, {
-      headers: this.getAuthHeaders(),
-    });
-    return response.json();
-  }
+  logout: async () => {
+    await api.post('/auth/logout/');
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user_data');
+  },
 
   /**
-   * Get technologies database
-   * Django URL: GET /api/technologies/
+   * Get current user profile
+   * Django endpoint: GET /api/auth/profile/
    */
-  async getTechnologies(): Promise<ApiResponse<any>> {
-    const response = await fetch(`${API_BASE_URL}/technologies/`, {
-      headers: this.getAuthHeaders(),
-    });
-    return response.json();
-  }
+  getProfile: async () => {
+    const response = await api.get('/auth/profile/');
+    return response.data;
+  },
+};
 
-  /**
-   * Get equipment database
-   * Django URL: GET /api/equipment/
-   */
-  async getEquipment(): Promise<ApiResponse<any>> {
-    const response = await fetch(`${API_BASE_URL}/equipment/`, {
-      headers: this.getAuthHeaders(),
-    });
-    return response.json();
-  }
-
-  /**
-   * Get labor rates
-   * Django URL: GET /api/labor-rates/
-   */
-  async getLaborRates(region?: string): Promise<ApiResponse<any>> {
-    const params = new URLSearchParams();
-    if (region) params.append('region', region);
-    
-    const response = await fetch(`${API_BASE_URL}/labor-rates/?${params}`, {
-      headers: this.getAuthHeaders(),
-    });
-    return response.json();
-  }
-
-  // ===== BOQ BUILDER APIs =====
-  
-  /**
-   * Get existing projects for BOQ analysis
-   * Django URL: GET /api/existing-projects/
-   */
-  async getExistingProjects(): Promise<ApiResponse<any>> {
-    const response = await fetch(`${API_BASE_URL}/existing-projects/`, {
-      headers: this.getAuthHeaders(),
-    });
-    return response.json();
-  }
-
-  /**
-   * Generate BOQ analysis
-   * Django URL: POST /api/boq-analysis/
-   */
-  async generateBOQAnalysis(analysisData: any) {
-    const response = await fetch(`${API_BASE_URL}/boq-analysis/`, {
-      method: 'POST',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(analysisData),
-    });
-    return response.json();
-  }
-
-  /**
-   * Export BOQ document
-   * Django URL: POST /api/boq-export/
-   */
-  async exportBOQ(boqData: any, format: 'pdf' | 'excel' = 'pdf') {
-    const response = await fetch(`${API_BASE_URL}/boq-export/`, {
-      method: 'POST',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify({ ...boqData, format }),
-    });
-    return response.json();
-  }
-
-  // ===== GIS PLANNING APIs =====
-  
+// GIS Planning API
+export const gisAPI = {
   /**
    * Upload shapefile
-   * Django URL: POST /api/shapefiles/upload/
+   * Django endpoint: POST /api/gis/shapefiles/
    */
-  async uploadShapefile(files: File[]) {
+  uploadShapefile: async (files: FileList) => {
     const formData = new FormData();
-    files.forEach(file => formData.append('files', file));
-    
-    const token = localStorage.getItem('tides_token');
-    const response = await fetch(`${API_BASE_URL}/shapefiles/upload/`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}` },
-      body: formData,
+    Array.from(files).forEach(file => {
+      formData.append('files', file);
     });
-    return response.json();
-  }
+    
+    const response = await api.post('/gis/shapefiles/', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
 
   /**
    * Get project zones
-   * Django URL: GET /api/projects/{project_id}/zones/
+   * Django endpoint: GET /api/gis/zones/
    */
-  async getProjectZones(projectId: string): Promise<ApiResponse<any>> {
-    const response = await fetch(`${API_BASE_URL}/projects/${projectId}/zones/`, {
-      headers: this.getAuthHeaders(),
-    });
-    return response.json();
-  }
+  getZones: async (projectId?: string) => {
+    const params = projectId ? `?project_id=${projectId}` : '';
+    const response = await api.get(`/gis/zones/${params}`);
+    return response.data;
+  },
 
   /**
    * Create zone
-   * Django URL: POST /api/projects/{project_id}/zones/
+   * Django endpoint: POST /api/gis/zones/
    */
-  async createZone(projectId: string, zoneData: any) {
-    const response = await fetch(`${API_BASE_URL}/projects/${projectId}/zones/`, {
-      method: 'POST',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(zoneData),
-    });
-    return response.json();
-  }
+  createZone: async (zoneData: any) => {
+    const response = await api.post('/gis/zones/', zoneData);
+    return response.data;
+  },
 
   /**
    * Update zone
-   * Django URL: PUT /api/zones/{zone_id}/
+   * Django endpoint: PUT /api/gis/zones/{id}/
    */
-  async updateZone(zoneId: string, zoneData: any) {
-    const response = await fetch(`${API_BASE_URL}/zones/${zoneId}/`, {
-      method: 'PUT',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(zoneData),
-    });
-    return response.json();
-  }
+  updateZone: async (zoneId: string, zoneData: any) => {
+    const response = await api.put(`/gis/zones/${zoneId}/`, zoneData);
+    return response.data;
+  },
 
   /**
    * Delete zone
-   * Django URL: DELETE /api/zones/{zone_id}/
+   * Django endpoint: DELETE /api/gis/zones/{id}/
    */
-  async deleteZone(zoneId: string) {
-    const response = await fetch(`${API_BASE_URL}/zones/${zoneId}/`, {
-      method: 'DELETE',
-      headers: this.getAuthHeaders(),
-    });
-    return response.ok;
-  }
+  deleteZone: async (zoneId: string) => {
+    await api.delete(`/gis/zones/${zoneId}/`);
+  },
+};
 
+// BOQ Builder API
+export const boqAPI = {
   /**
-   * Export shapefile
-   * Django URL: POST /api/gis/export-shapefile/
+   * Get existing projects for BOQ analysis
+   * Django endpoint: GET /api/boq/existing-projects/
    */
-  async exportShapefile(zonesData: any) {
-    const response = await fetch(`${API_BASE_URL}/gis/export-shapefile/`, {
-      method: 'POST',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(zonesData),
-    });
-    return response.json();
-  }
-
-  /**
-   * Get existing projects for map overlay
-   * Django URL: GET /api/gis/existing-projects/
-   */
-  async getExistingProjectsForMap(): Promise<ApiResponse<any>> {
-    const response = await fetch(`${API_BASE_URL}/gis/existing-projects/`, {
-      headers: this.getAuthHeaders(),
-    });
-    return response.json();
-  }
-
-  // ===== HYDRAULIC DESIGN APIs =====
-  
-  /**
-   * Calculate water requirements
-   * Django URL: POST /api/hydraulic-design/water-requirements/
-   */
-  async calculateWaterRequirements(designData: any) {
-    const response = await fetch(`${API_BASE_URL}/hydraulic-design/water-requirements/`, {
-      method: 'POST',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(designData),
-    });
-    return response.json();
-  }
-
-  /**
-   * Generate hydraulic design
-   * Django URL: POST /api/hydraulic-design/generate/
-   */
-  async generateHydraulicDesign(designParameters: any) {
-    const response = await fetch(`${API_BASE_URL}/hydraulic-design/generate/`, {
-      method: 'POST',
-      headers: this.getAuthHeaders(),
-      body: JSON.stringify(designParameters),
-    });
-    return response.json();
-  }
-
-  // ===== FILE MANAGEMENT APIs =====
-  
-  /**
-   * Upload file
-   * Django URL: POST /api/files/upload/
-   */
-  async uploadFile(file: File, fileType: string) {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('file_type', fileType);
+  getExistingProjects: async (filters?: { irrigation_type?: string; status?: string }) => {
+    const params = new URLSearchParams();
+    if (filters?.irrigation_type) params.append('irrigation_type', filters.irrigation_type);
+    if (filters?.status) params.append('status', filters.status);
     
-    const token = localStorage.getItem('tides_token');
-    const response = await fetch(`${API_BASE_URL}/files/upload/`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}` },
-      body: formData,
-    });
-    return response.json();
-  }
+    const response = await api.get(`/boq/existing-projects/?${params.toString()}`);
+    return response.data;
+  },
 
   /**
-   * Download file
-   * Django URL: GET /api/files/{file_id}/download/
+   * Create new existing project
+   * Django endpoint: POST /api/boq/existing-projects/
    */
-  async downloadFile(fileId: string) {
-    const response = await fetch(`${API_BASE_URL}/files/${fileId}/download/`, {
-      headers: this.getAuthHeaders(),
-    });
-    return response.blob();
-  }
-}
+  createExistingProject: async (projectData: any) => {
+    const response = await api.post('/boq/existing-projects/', projectData);
+    return response.data;
+  },
 
-export const apiService = new ApiService();
-export default apiService;
+  /**
+   * Create BOQ analysis for an existing project
+   * Django endpoint: POST /api/boq/analyses/
+   */
+  createBOQAnalysis: async (analysisData: any) => {
+    const response = await api.post('/boq/analyses/', analysisData);
+    return response.data;
+  },
+
+  /**
+   * Get BOQ analyses
+   * Django endpoint: GET /api/boq/analyses/
+   */
+  getBOQAnalyses: async () => {
+    const response = await api.get('/boq/analyses/');
+    return response.data;
+  },
+
+  /**
+   * Get materials database
+   * Django endpoint: GET /api/materials/materials/
+   */
+  getMaterials: async (filters?: { category?: string; region?: string }) => {
+    const params = new URLSearchParams();
+    if (filters?.category) params.append('category', filters.category);
+    
+    const endpoint = filters?.region 
+      ? `/materials/materials/by_region/?region=${filters.region}&${params.toString()}`
+      : `/materials/materials/?${params.toString()}`;
+    
+    const response = await api.get(endpoint);
+    return response.data;
+  },
+
+  /**
+   * Get irrigation technologies
+   * Django endpoint: GET /api/materials/technologies/
+   */
+  getTechnologies: async (technologyType?: string) => {
+    const params = technologyType ? `?technology_type=${technologyType}` : '';
+    const response = await api.get(`/materials/technologies/${params}`);
+    return response.data;
+  },
+
+  /**
+   * Get cost analysis data
+   * Django endpoint: GET /api/boq/existing-projects/cost_analysis/
+   */
+  getCostAnalysis: async () => {
+    const response = await api.get('/boq/existing-projects/cost_analysis/');
+    return response.data;
+  },
+
+  /**
+   * Export BOQ analysis
+   * Django endpoint: GET /api/boq/analyses/{id}/export_boq/
+   */
+  exportBOQ: async (analysisId: string, format: 'pdf' | 'excel') => {
+    const response = await api.get(`/boq/analyses/${analysisId}/export_boq/?format=${format}`);
+    return response.data;
+  },
+
+  /**
+   * Get BOQ templates
+   * Django endpoint: GET /api/boq/templates/
+   */
+  getBOQTemplates: async (irrigationType?: string) => {
+    const params = irrigationType ? `?irrigation_type=${irrigationType}` : '';
+    const response = await api.get(`/boq/templates/${params}`);
+    return response.data;
+  },
+};
+
+// Projects API
+export const projectsAPI = {
+  /**
+   * Get all projects
+   * Django endpoint: GET /api/projects/
+   */
+  getProjects: async (filters?: { status?: string; zone?: string }) => {
+    const params = new URLSearchParams();
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.zone) params.append('zone', filters.zone);
+    
+    const response = await api.get(`/projects/?${params.toString()}`);
+    return response.data;
+  },
+
+  /**
+   * Create new project
+   * Django endpoint: POST /api/projects/
+   */
+  createProject: async (projectData: any) => {
+    const response = await api.post('/projects/', projectData);
+    return response.data;
+  },
+
+  /**
+   * Get project by ID
+   * Django endpoint: GET /api/projects/{id}/
+   */
+  getProject: async (projectId: string) => {
+    const response = await api.get(`/projects/${projectId}/`);
+    return response.data;
+  },
+
+  /**
+   * Update project
+   * Django endpoint: PUT /api/projects/{id}/
+   */
+  updateProject: async (projectId: string, projectData: any) => {
+    const response = await api.put(`/projects/${projectId}/`, projectData);
+    return response.data;
+  },
+
+  /**
+   * Get project wizard data
+   * Django endpoint: GET /api/projects/{id}/wizard/
+   */
+  getProjectWizard: async (projectId: string) => {
+    const response = await api.get(`/projects/${projectId}/wizard/`);
+    return response.data;
+  },
+
+  /**
+   * Update project wizard data
+   * Django endpoint: PUT /api/projects/{id}/wizard/
+   */
+  updateProjectWizard: async (projectId: string, wizardData: any) => {
+    const response = await api.put(`/projects/${projectId}/wizard/`, wizardData);
+    return response.data;
+  },
+
+  /**
+   * Submit project for approval
+   * Django endpoint: POST /api/projects/{id}/submit/
+   */
+  submitProject: async (projectId: string) => {
+    const response = await api.post(`/projects/${projectId}/submit/`);
+    return response.data;
+  },
+
+  /**
+   * Get dashboard statistics
+   * Django endpoint: GET /api/projects/dashboard_stats/
+   */
+  getDashboardStats: async () => {
+    const response = await api.get('/projects/dashboard_stats/');
+    return response.data;
+  },
+};
+
+// Resources API
+export const resourcesAPI = {
+  /**
+   * Get materials
+   * Django endpoint: GET /api/resources/materials/
+   */
+  getMaterials: async () => {
+    const response = await api.get('/resources/materials/');
+    return response.data;
+  },
+
+  /**
+   * Get equipment
+   * Django endpoint: GET /api/resources/equipment/
+   */
+  getEquipment: async () => {
+    const response = await api.get('/resources/equipment/');
+    return response.data;
+  },
+
+  /**
+   * Get labor rates
+   * Django endpoint: GET /api/resources/labor/
+   */
+  getLaborRates: async () => {
+    const response = await api.get('/resources/labor/');
+    return response.data;
+  },
+};
+
+// Helper function to handle file uploads
+export const uploadFile = async (file: File, fileType: string, projectId?: string) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('name', file.name);
+  formData.append('file_type', fileType);
+  if (projectId) formData.append('project', projectId);
+
+  const response = await api.post('/files/uploads/', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};
+
+// Helper function to handle errors
+export const handleAPIError = (error: any) => {
+  if (error.response?.data?.detail) {
+    return error.response.data.detail;
+  } else if (error.response?.data?.error) {
+    return error.response.data.error;
+  } else if (error.message) {
+    return error.message;
+  }
+  return 'An unexpected error occurred';
+};
