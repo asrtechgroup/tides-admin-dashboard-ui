@@ -7,8 +7,8 @@
 
 import axios from 'axios';
 
-// Use VITE_API_URL for base URL, default to /api for local dev
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+// Django API Integration
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
