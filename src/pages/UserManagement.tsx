@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,68 +6,50 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Plus, Edit, Trash2, Filter } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { authAPI } from '@/services/api';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { useToast } from '@/components/ui/use-toast';
 
 const UserManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
+  const [showAddUser, setShowAddUser] = useState(false);
+  const [addUserForm, setAddUserForm] = useState({
+    username: '',
+    email: '',
+    first_name: '',
+    last_name: '',
+    role: 'Viewer',
+    password: '',
+  });
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+  const [users, setUsers] = useState<any[]>([]);
 
-  const users = [
-    {
-      id: 1,
-      name: 'Rajesh Kumar',
-      email: 'rajesh.kumar@tides.gov.in',
-      role: 'Engineer',
-      status: 'Active',
-      lastLogin: '2 hours ago',
-      projects: 12,
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=32&h=32&fit=crop&crop=face'
-    },
-    {
-      id: 2,
-      name: 'Priya Sharma',
-      email: 'priya.sharma@tides.gov.in',
-      role: 'Admin',
-      status: 'Active',
-      lastLogin: '1 day ago',
-      projects: 28,
-      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b5d0?w=32&h=32&fit=crop&crop=face'
-    },
-    {
-      id: 3,
-      name: 'Amit Patel',
-      email: 'amit.patel@tides.gov.in',
-      role: 'Planner',
-      status: 'Active',
-      lastLogin: '3 hours ago',
-      projects: 8,
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=32&h=32&fit=crop&crop=face'
-    },
-    {
-      id: 4,
-      name: 'Sneha Reddy',
-      email: 'sneha.reddy@tides.gov.in',
-      role: 'Viewer',
-      status: 'Inactive',
-      lastLogin: '1 week ago',
-      projects: 0,
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=32&h=32&fit=crop&crop=face'
-    },
-    {
-      id: 5,
-      name: 'Vikram Singh',
-      email: 'vikram.singh@tides.gov.in',
-      role: 'Engineer',
-      status: 'Active',
-      lastLogin: '5 minutes ago',
-      projects: 15,
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=32&h=32&fit=crop&crop=face'
-    }
-  ];
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        // Fetch users from backend
+        const response = await authAPI.getUsers();
+        // Try to handle paginated or flat array
+        if (Array.isArray(response)) {
+          setUsers(response);
+        } else if (response && Array.isArray(response.results)) {
+          setUsers(response.results);
+        } else {
+          setUsers([]);
+        }
+      } catch (err: any) {
+        toast({ title: 'Error', description: 'Failed to fetch users', variant: 'destructive' });
+      }
+    };
+    fetchUsers();
+  }, []);
 
   const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = roleFilter === 'all' || user.role.toLowerCase() === roleFilter.toLowerCase();
+    const matchesSearch = (user.username?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+                         (user.email?.toLowerCase() || '').includes(searchTerm.toLowerCase());
+    const matchesRole = roleFilter === 'all' || (user.role?.toLowerCase() === roleFilter.toLowerCase());
     return matchesSearch && matchesRole;
   });
 
@@ -93,6 +74,29 @@ const UserManagement = () => {
       : 'bg-stone-100 text-stone-700 border-stone-200';
   };
 
+  const handleAddUser = async () => {
+    setLoading(true);
+    try {
+      await authAPI.registerUser(addUserForm);
+      toast({ title: 'User registered', description: 'The user was created successfully.', variant: 'default' });
+      setShowAddUser(false);
+      setAddUserForm({ username: '', email: '', first_name: '', last_name: '', role: 'Viewer', password: '' });
+      // Refresh user list from backend
+      const response = await authAPI.getUsers();
+      if (Array.isArray(response)) {
+        setUsers(response);
+      } else if (response && Array.isArray(response.results)) {
+        setUsers(response.results);
+      } else {
+        setUsers([]);
+      }
+    } catch (err: any) {
+      toast({ title: 'Registration failed', description: err?.response?.data?.error || err.message, variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -101,11 +105,41 @@ const UserManagement = () => {
           <h1 className="text-3xl font-bold text-stone-800">User Management</h1>
           <p className="text-stone-600 mt-1">Manage user accounts, roles, and permissions</p>
         </div>
-        <Button className="bg-emerald-600 hover:bg-emerald-700">
+        <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={() => setShowAddUser(true)}>
           <Plus className="w-4 h-4 mr-2" />
           Add User
         </Button>
       </div>
+
+      {/* Add User Modal */}
+      <Dialog open={showAddUser} onOpenChange={setShowAddUser}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New User</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input placeholder="Username" value={addUserForm.username} onChange={e => setAddUserForm(f => ({ ...f, username: e.target.value }))} />
+            <Input placeholder="Email" type="email" value={addUserForm.email} onChange={e => setAddUserForm(f => ({ ...f, email: e.target.value }))} />
+            <div className="flex gap-2">
+              <Input placeholder="First Name" value={addUserForm.first_name} onChange={e => setAddUserForm(f => ({ ...f, first_name: e.target.value }))} />
+              <Input placeholder="Last Name" value={addUserForm.last_name} onChange={e => setAddUserForm(f => ({ ...f, last_name: e.target.value }))} />
+            </div>
+            <Select value={addUserForm.role} onValueChange={role => setAddUserForm(f => ({ ...f, role }))}>
+              <SelectTrigger><SelectValue placeholder="Role" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Admin">Admin</SelectItem>
+                <SelectItem value="Engineer">Engineer</SelectItem>
+                <SelectItem value="Planner">Planner</SelectItem>
+                <SelectItem value="Viewer">Viewer</SelectItem>
+              </SelectContent>
+            </Select>
+            <Input placeholder="Password" type="password" value={addUserForm.password} onChange={e => setAddUserForm(f => ({ ...f, password: e.target.value }))} />
+          </div>
+          <DialogFooter>
+            <Button onClick={handleAddUser} disabled={loading} className="bg-emerald-600 hover:bg-emerald-700 w-full">{loading ? 'Registering...' : 'Register User'}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Filters */}
       <Card className="border-0 shadow-md">
@@ -156,32 +190,21 @@ const UserManagement = () => {
               <div key={user.id} className="flex items-center justify-between p-4 bg-stone-50 rounded-lg hover:bg-stone-100 transition-colors">
                 <div className="flex items-center space-x-4">
                   <Avatar className="w-12 h-12">
-                    <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                    <AvatarImage src={user.avatar || undefined} alt={user.username} />
+                    <AvatarFallback>{user.username?.charAt(0)}</AvatarFallback>
                   </Avatar>
-                  
                   <div>
-                    <h3 className="font-semibold text-stone-800">{user.name}</h3>
+                    <h3 className="font-semibold text-stone-800">{user.username}</h3>
                     <p className="text-sm text-stone-600">{user.email}</p>
                     <div className="flex items-center space-x-2 mt-1">
-                      <Badge className={`text-xs ${getRoleBadgeColor(user.role)}`}>
-                        {user.role}
-                      </Badge>
-                      <Badge className={`text-xs ${getStatusBadgeColor(user.status)}`}>
-                        {user.status}
-                      </Badge>
+                      <Badge className={`text-xs ${getRoleBadgeColor(user.role)}`}>{user.role}</Badge>
                     </div>
                   </div>
                 </div>
-
                 <div className="flex items-center space-x-6 text-sm text-stone-600">
-                  <div className="text-center">
-                    <div className="font-semibold text-stone-800">{user.projects}</div>
-                    <div>Projects</div>
-                  </div>
                   <div className="text-center min-w-20">
-                    <div className="font-semibold text-stone-800">Last Login</div>
-                    <div>{user.lastLogin}</div>
+                    <div className="font-semibold text-stone-800">Joined</div>
+                    <div>{user.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}</div>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Button size="sm" variant="outline" className="border-emerald-200 text-emerald-700 hover:bg-emerald-50">

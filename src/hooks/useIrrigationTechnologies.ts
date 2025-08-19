@@ -1,80 +1,28 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { IrrigationTechnology } from '@/types/irrigation';
 import { toast } from 'sonner';
-
-const initialTechnologies: IrrigationTechnology[] = [
-  {
-    id: '1',
-    name: 'Precision Drip System',
-    type: 'drip',
-    description: 'High-efficiency drip irrigation with precision emitters',
-    efficiency: 95,
-    waterRequirement: 2.5,
-    maintenanceLevel: 'medium',
-    lifespan: 15,
-    specifications: [],
-    costingRules: [],
-    suitabilityCriteria: {
-      soilTypes: ['clay', 'loam', 'sandy-loam'],
-      cropTypes: ['vegetables', 'fruits', 'cash-crops'],
-      farmSizes: ['small', 'medium', 'large'],
-      waterQuality: ['good', 'moderate'],
-      topography: ['flat', 'gentle-slope'],
-      climateZones: ['arid', 'semi-arid'],
-    },
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    name: 'Micro Sprinkler System',
-    type: 'micro-spray',
-    description: 'Low-pressure micro sprinkler for uniform water distribution',
-    efficiency: 85,
-    waterRequirement: 4.0,
-    maintenanceLevel: 'low',
-    lifespan: 12,
-    specifications: [],
-    costingRules: [],
-    suitabilityCriteria: {
-      soilTypes: ['sandy', 'loam', 'sandy-loam'],
-      cropTypes: ['fruits', 'vegetables'],
-      farmSizes: ['small', 'medium'],
-      waterQuality: ['good'],
-      topography: ['flat', 'gentle-slope', 'moderate-slope'],
-      climateZones: ['humid', 'semi-humid'],
-    },
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
+import { resourcesAPI } from '@/services/api';
 
 export const useIrrigationTechnologies = () => {
-  const [technologies, setTechnologies] = useState<IrrigationTechnology[]>(initialTechnologies);
+  const [technologies, setTechnologies] = useState<IrrigationTechnology[]>([]);
   const [showTechnologyForm, setShowTechnologyForm] = useState(false);
   const [editingTechnology, setEditingTechnology] = useState<IrrigationTechnology | undefined>();
 
-  const handleAddTechnology = (data: any) => {
-    const newTechnology: IrrigationTechnology = {
-      id: Date.now().toString(),
-      ...data,
-      specifications: [],
-      costingRules: [],
-      suitabilityCriteria: {
-        soilTypes: [],
-        cropTypes: [],
-        farmSizes: [],
-        waterQuality: [],
-        topography: [],
-        climateZones: [],
-      },
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+  useEffect(() => {
+    const fetchTechnologies = async () => {
+      try {
+        const data: any = await resourcesAPI.getTechnologies();
+        setTechnologies(data.results || data);
+      } catch (error) {
+        toast.error('Failed to load irrigation technologies from backend.');
+        setTechnologies([]);
+      }
     };
-    setTechnologies([...technologies, newTechnology]);
-    setShowTechnologyForm(false);
-    toast.success('Technology added successfully');
+    fetchTechnologies();
+  }, []);
+
+  const handleAddTechnology = () => {
+    toast.error('Backend endpoint for adding irrigation technology is missing. Please implement it.');
   };
 
   const handleEditTechnology = (technology: IrrigationTechnology) => {
@@ -82,22 +30,12 @@ export const useIrrigationTechnologies = () => {
     setShowTechnologyForm(true);
   };
 
-  const handleUpdateTechnology = (data: any) => {
-    if (editingTechnology) {
-      setTechnologies(technologies.map(t => 
-        t.id === editingTechnology.id 
-          ? { ...editingTechnology, ...data, updatedAt: new Date().toISOString() }
-          : t
-      ));
-      setShowTechnologyForm(false);
-      setEditingTechnology(undefined);
-      toast.success('Technology updated successfully');
-    }
+  const handleUpdateTechnology = () => {
+    toast.error('Backend endpoint for updating irrigation technology is missing. Please implement it.');
   };
 
-  const handleDeleteTechnology = (id: string) => {
-    setTechnologies(technologies.filter(t => t.id !== id));
-    toast.success('Technology deleted successfully');
+  const handleDeleteTechnology = () => {
+    toast.error('Backend endpoint for deleting irrigation technology is missing. Please implement it.');
   };
 
   const handleCancelForm = () => {

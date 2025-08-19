@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -12,65 +11,13 @@ import EquipmentTable from '@/components/resources/EquipmentTable';
 import LaborForm from '@/components/resources/LaborForm';
 import LaborTable from '@/components/resources/LaborTable';
 import { toast } from 'sonner';
+import { resourcesAPI } from '@/services/api';
 
 const Resources = () => {
-  // Materials state
-  const [materials, setMaterials] = useState<Material[]>([
-    {
-      id: '1',
-      name: 'PVC Pipe 110mm',
-      category: 'pipes',
-      unit: 'meter',
-      basePrice: 15000,
-      supplier: 'Tanzania Pipes Ltd',
-      specifications: '110mm diameter, PN10, SDR17',
-      regionalPricing: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: '2',
-      name: 'Drip Emitter 2L/h',
-      category: 'fittings',
-      unit: 'piece',
-      basePrice: 500,
-      supplier: 'Irrigation Solutions',
-      specifications: '2L/h flow rate, self-compensating',
-      regionalPricing: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-  ]);
-
-  // Equipment state
-  const [equipment, setEquipment] = useState<Equipment[]>([
-    {
-      id: '1',
-      name: 'Mini Excavator',
-      type: 'excavator',
-      hourlyRate: 50000,
-      dailyRate: 350000,
-      operator: true,
-      fuelConsumption: 8.5,
-      availability: ['Dar es Salaam', 'Arusha'],
-      regionalRates: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-  ]);
-
-  // Labor state
-  const [labor, setLabor] = useState<Labor[]>([
-    {
-      id: '1',
-      skill: 'Irrigation Technician',
-      dailyRate: 25000,
-      region: 'Dar es Salaam',
-      experience: 'intermediate',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-  ]);
+  // Materials, Equipment, Labor state
+  const [materials, setMaterials] = useState<Material[]>([]);
+  const [equipment, setEquipment] = useState<Equipment[]>([]);
+  const [labor, setLabor] = useState<Labor[]>([]);
 
   // Form states
   const [showMaterialForm, setShowMaterialForm] = useState(false);
@@ -79,6 +26,28 @@ const Resources = () => {
   const [editingMaterial, setEditingMaterial] = useState<Material | undefined>();
   const [editingEquipment, setEditingEquipment] = useState<Equipment | undefined>();
   const [editingLabor, setEditingLabor] = useState<Labor | undefined>();
+
+  // Fetch all resources from backend on mount
+  useEffect(() => {
+    const fetchResources = async () => {
+      try {
+        const [materialsData, equipmentData, laborData]: any = await Promise.all([
+          resourcesAPI.getMaterials(),
+          resourcesAPI.getEquipment(),
+          resourcesAPI.getLaborRates(),
+        ]);
+        setMaterials(materialsData.results || materialsData);
+        setEquipment(equipmentData.results || equipmentData);
+        setLabor(laborData.results || laborData);
+      } catch (error: any) {
+        toast.error('Failed to load resources from backend.');
+        setMaterials([]);
+        setEquipment([]);
+        setLabor([]);
+      }
+    };
+    fetchResources();
+  }, []);
 
   // Material handlers
   const handleAddMaterial = (data: any) => {

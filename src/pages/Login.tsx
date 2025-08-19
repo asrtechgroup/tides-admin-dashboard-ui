@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,24 +8,36 @@ import { Droplets } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
+const roleDashboardMap: Record<string, string> = {
+  Admin: '/admin-dashboard',
+  Engineer: '/engineer-dashboard',
+  Planner: '/planner-dashboard',
+  Viewer: '/viewer-dashboard',
+};
+
 const Login = () => {
   const [email, setEmail] = useState('admin@tides.com');
   const [password, setPassword] = useState('admin123');
   const [loading, setLoading] = useState(false);
-  const { login, isAuthenticated } = useAuth();
+  const [error, setError] = useState<string | null>(null);
+  const { login, isAuthenticated, user } = useAuth();
 
-  if (isAuthenticated) {
-    return <Navigate to="/" replace />;
+  // Role-based redirect after login
+  if (isAuthenticated && user) {
+    const dashboardPath = roleDashboardMap[user.role] || '/';
+    return <Navigate to={dashboardPath} replace />;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
+    setError(null);
     try {
       await login(email, password);
       toast.success('Successfully logged in!');
     } catch (error) {
+      setError('Invalid email or password. Please try again.');
+      setPassword('');
       toast.error('Login failed. Please try again.');
     } finally {
       setLoading(false);
@@ -69,6 +80,9 @@ const Login = () => {
                 required
               />
             </div>
+            {error && (
+              <div className="text-red-600 text-sm text-center">{error}</div>
+            )}
             <Button 
               type="submit" 
               className="w-full bg-emerald-600 hover:bg-emerald-700" 

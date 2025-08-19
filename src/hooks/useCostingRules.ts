@@ -1,44 +1,37 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { resourcesAPI } from '@/services/api';
 import { CostingRule } from '@/types/irrigation';
 
-const initialCostingRules: CostingRule[] = [
-  {
-    component: 'Drip Pipes',
-    costPerUnit: 1500,
-    unit: 'm',
-    formula: 'length * cost_per_unit',
-    factors: ['length', 'diameter']
-  },
-  {
-    component: 'Emitters',
-    costPerUnit: 50,
-    unit: 'pcs',
-    formula: 'plant_count * emitters_per_plant * cost_per_unit',
-    factors: ['plant_count', 'emitters_per_plant', 'flow_rate']
-  },
-  {
-    component: 'Filter System',
-    costPerUnit: 25000,
-    unit: 'pcs',
-    formula: 'area * filter_factor * cost_per_unit',
-    factors: ['area', 'water_quality', 'flow_rate']
-  }
-];
-
 export const useCostingRules = () => {
-  const [costingRules, setCostingRules] = useState<CostingRule[]>(initialCostingRules);
+  const [costingRules, setCostingRules] = useState<CostingRule[]>([]);
   const [showCostingForm, setShowCostingForm] = useState(false);
   const [editingCostingRule, setEditingCostingRule] = useState<CostingRule | undefined>();
 
-  const handleAddCostingRule = (data: any) => {
-    const newRule: CostingRule = {
-      ...data,
-    };
-    setCostingRules([...costingRules, newRule]);
-    setShowCostingForm(false);
-    toast.success('Costing rule added successfully');
+  // Fetch from backend on mount and after any change
+  const fetchCostingRules = async () => {
+    try {
+      const data: any = await resourcesAPI.getCostingRules();
+      setCostingRules(data.results || data);
+    } catch (error) {
+      toast.error('Failed to load costing rules from backend.');
+      setCostingRules([]);
+    }
+  };
+
+  useEffect(() => {
+    fetchCostingRules();
+  }, []);
+
+  const handleAddCostingRule = async (data: any) => {
+    try {
+      await resourcesAPI.createCostingRule(data);
+      toast.success('Costing rule added successfully');
+      setShowCostingForm(false);
+      fetchCostingRules();
+    } catch (error) {
+      toast.error('Failed to add costing rule.');
+    }
   };
 
   const handleEditCostingRule = (rule: CostingRule) => {
@@ -46,22 +39,27 @@ export const useCostingRules = () => {
     setShowCostingForm(true);
   };
 
-  const handleUpdateCostingRule = (data: any) => {
-    if (editingCostingRule) {
-      setCostingRules(costingRules.map(r => 
-        r.component === editingCostingRule.component 
-          ? { ...data }
-          : r
-      ));
+  const handleUpdateCostingRule = async (data: any) => {
+    if (!editingCostingRule) return;
+    try {
+      await resourcesAPI.updateCostingRule(editingCostingRule.component, data);
+      toast.success('Costing rule updated successfully');
       setShowCostingForm(false);
       setEditingCostingRule(undefined);
-      toast.success('Costing rule updated successfully');
+      fetchCostingRules();
+    } catch (error) {
+      toast.error('Failed to update costing rule.');
     }
   };
 
-  const handleDeleteCostingRule = (component: string) => {
-    setCostingRules(costingRules.filter(r => r.component !== component));
-    toast.success('Costing rule deleted successfully');
+  const handleDeleteCostingRule = async (component: string) => {
+    try {
+      await resourcesAPI.deleteCostingRule(component);
+      toast.success('Costing rule deleted successfully');
+      fetchCostingRules();
+    } catch (error) {
+      toast.error('Failed to delete costing rule.');
+    }
   };
 
   const handleCancelForm = () => {
