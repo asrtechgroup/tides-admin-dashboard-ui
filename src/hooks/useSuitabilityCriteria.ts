@@ -1,6 +1,6 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { resourcesAPI } from '@/services/api';
 
 interface SuitabilityCriterion {
   id: string;
@@ -14,50 +14,35 @@ interface SuitabilityCriterion {
   description: string;
 }
 
-const initialCriteria: SuitabilityCriterion[] = [
-  {
-    id: '1',
-    name: 'Soil pH',
-    category: 'soil',
-    minValue: 6.0,
-    maxValue: 7.5,
-    unit: 'pH',
-    weight: 8,
-    description: 'Optimal pH range for most crops'
-  },
-  {
-    id: '2',
-    name: 'Annual Rainfall',
-    category: 'climate',
-    minValue: 500,
-    maxValue: 1200,
-    unit: 'mm',
-    weight: 9,
-    description: 'Required annual precipitation for irrigation planning'
-  },
-  {
-    id: '3',
-    name: 'Soil Type',
-    category: 'soil',
-    allowedValues: ['clay', 'loam', 'sandy-loam', 'sandy'],
-    weight: 7,
-    description: 'Suitable soil types for different irrigation methods'
-  }
-];
-
 export const useSuitabilityCriteria = () => {
-  const [criteria, setCriteria] = useState<SuitabilityCriterion[]>(initialCriteria);
+  const [criteria, setCriteria] = useState<SuitabilityCriterion[]>([]);
   const [showCriteriaForm, setShowCriteriaForm] = useState(false);
   const [editingCriterion, setEditingCriterion] = useState<SuitabilityCriterion | undefined>();
 
-  const handleAddCriterion = (data: any) => {
-    const newCriterion: SuitabilityCriterion = {
-      id: Date.now().toString(),
-      ...data,
-    };
-    setCriteria([...criteria, newCriterion]);
-    setShowCriteriaForm(false);
-    toast.success('Suitability criterion added successfully');
+  // Fetch from backend on mount and after any change
+  const fetchCriteria = async () => {
+    try {
+      const data: any = await resourcesAPI.getSuitabilityCriteria();
+      setCriteria(data.results || data);
+    } catch (error) {
+      toast.error('Failed to load suitability criteria from backend.');
+      setCriteria([]);
+    }
+  };
+
+  useEffect(() => {
+    fetchCriteria();
+  }, []);
+
+  const handleAddCriterion = async (data: any) => {
+    try {
+      await resourcesAPI.createSuitabilityCriterion(data);
+      toast.success('Suitability criterion added successfully');
+      setShowCriteriaForm(false);
+      fetchCriteria();
+    } catch (error) {
+      toast.error('Failed to add suitability criterion.');
+    }
   };
 
   const handleEditCriterion = (criterion: SuitabilityCriterion) => {
@@ -65,22 +50,27 @@ export const useSuitabilityCriteria = () => {
     setShowCriteriaForm(true);
   };
 
-  const handleUpdateCriterion = (data: any) => {
-    if (editingCriterion) {
-      setCriteria(criteria.map(c => 
-        c.id === editingCriterion.id 
-          ? { ...editingCriterion, ...data }
-          : c
-      ));
+  const handleUpdateCriterion = async (data: any) => {
+    if (!editingCriterion) return;
+    try {
+      await resourcesAPI.updateSuitabilityCriterion(editingCriterion.id, data);
+      toast.success('Suitability criterion updated successfully');
       setShowCriteriaForm(false);
       setEditingCriterion(undefined);
-      toast.success('Suitability criterion updated successfully');
+      fetchCriteria();
+    } catch (error) {
+      toast.error('Failed to update suitability criterion.');
     }
   };
 
-  const handleDeleteCriterion = (id: string) => {
-    setCriteria(criteria.filter(c => c.id !== id));
-    toast.success('Suitability criterion deleted successfully');
+  const handleDeleteCriterion = async (id: string) => {
+    try {
+      await resourcesAPI.deleteSuitabilityCriterion(id);
+      toast.success('Suitability criterion deleted successfully');
+      fetchCriteria();
+    } catch (error) {
+      toast.error('Failed to delete suitability criterion.');
+    }
   };
 
   const handleCancelForm = () => {

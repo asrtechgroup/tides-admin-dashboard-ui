@@ -1,5 +1,5 @@
-
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { authAPI } from '@/services/api';
 
 interface User {
   id: string;
@@ -8,6 +8,18 @@ interface User {
   role: 'Admin' | 'Engineer' | 'Planner' | 'Viewer';
   avatar?: string;
   requiresPasswordChange?: boolean;
+}
+
+// Backend user profile type
+interface Profile {
+  id: string;
+  username: string;
+  email: string;
+  first_name?: string;
+  last_name?: string;
+  role: 'Admin' | 'Engineer' | 'Planner' | 'Viewer';
+  avatar?: string;
+  requires_password_change?: boolean;
 }
 
 interface AuthContextType {
@@ -75,55 +87,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   });
 
   const login = async (email: string, password: string) => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Mock different user types based on email
-    let mockUser: User;
-    
-    if (email.includes('admin')) {
-      mockUser = {
-        id: '1',
-        name: 'Admin User',
-        email: email,
-        role: 'Admin',
-        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=32&h=32&fit=crop&crop=face'
+    try {
+      await authAPI.login({ username: email, password });
+      // Use 'any' for profile to avoid type error (TODO: type strictly)
+      const profile: any = await authAPI.getProfile();
+      const backendUser: User = {
+        id: profile.id,
+        name: profile.first_name && profile.last_name ? `${profile.first_name} ${profile.last_name}` : profile.username || profile.email,
+        email: profile.email,
+        role: profile.role,
+        avatar: profile.avatar,
+        requiresPasswordChange: profile.requires_password_change,
       };
-    } else if (email.includes('engineer')) {
-      mockUser = {
-        id: '2',
-        name: 'Engineer User',
-        email: email,
-        role: 'Engineer',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=32&h=32&fit=crop&crop=face'
-      };
-    } else if (email.includes('planner')) {
-      mockUser = {
-        id: '3',
-        name: 'Planner User',
-        email: email,
-        role: 'Planner',
-        avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b5d0?w=32&h=32&fit=crop&crop=face'
-      };
-    } else {
-      mockUser = {
-        id: '4',
-        name: 'Viewer User',
-        email: email,
-        role: 'Viewer',
-        avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=32&h=32&fit=crop&crop=face'
-      };
+      setUser(backendUser);
+      localStorage.setItem('tides_user', JSON.stringify(backendUser));
+    } catch (error) {
+      setUser(null);
+      localStorage.removeItem('tides_user');
+      localStorage.removeItem('auth_token');
+      throw error;
     }
-    
-    setUser(mockUser);
-    localStorage.setItem('tides_user', JSON.stringify(mockUser));
-    localStorage.setItem('tides_token', 'mock_jwt_token');
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await authAPI.logout();
     setUser(null);
     localStorage.removeItem('tides_user');
-    localStorage.removeItem('tides_token');
+    localStorage.removeItem('auth_token');
   };
 
   const hasRole = (role: string | string[]) => {

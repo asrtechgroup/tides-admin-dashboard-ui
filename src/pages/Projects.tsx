@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +14,7 @@ import {
 import { Plus, Search, Calendar, MapPin } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { projectsAPI } from '@/services/api';
 
 /**
  * DJANGO API INTEGRATION POINTS:
@@ -65,49 +65,6 @@ interface Project {
   createdBy?: string;
 }
 
-// Mock data for development - replace with Django API calls
-const mockDraftProjects: Project[] = [
-  {
-    id: '1',
-    name: 'Irrigation Project Alpha',
-    description: 'Drip irrigation system for agricultural zone A',
-    zone: 'Zone A',
-    regions: ['Region 1', 'Region 2'],
-    districts: ['District 1'],
-    schemeName: 'Alpha Scheme',
-    step: 2,
-    status: 'draft',
-    createdAt: '2024-01-15',
-    updatedAt: '2024-01-20'
-  },
-  {
-    id: '2',
-    name: 'Beta Water Management',
-    description: 'Sprinkler system implementation',
-    zone: 'Zone B',
-    regions: ['Region 3'],
-    districts: ['District 2', 'District 3'],
-    schemeName: 'Beta Management Scheme',
-    step: 1,
-    status: 'draft',
-    createdAt: '2024-01-10',
-    updatedAt: '2024-01-18'
-  },
-  {
-    id: '3',
-    name: 'Gamma Irrigation Network',
-    description: 'Comprehensive irrigation network for multiple crops',
-    zone: 'Zone C',
-    regions: ['Region 4', 'Region 5'],
-    districts: ['District 4'],
-    schemeName: 'Gamma Network',
-    step: 3,
-    status: 'submitted',
-    createdAt: '2024-01-05',
-    updatedAt: '2024-01-22'
-  }
-];
-
 const Projects = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [projects, setProjects] = useState<Project[]>([]);
@@ -119,32 +76,25 @@ const Projects = () => {
     fetchProjects();
   }, []);
 
-  /**
-   * Fetch projects from Django backend
-   * TODO: Replace with actual Django API call
-   */
+  // Fetch projects from Django backend
   const fetchProjects = async () => {
     try {
       setIsLoading(true);
-      
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/projects/', {
-      //   headers: {
-      //     'Authorization': `Bearer ${localStorage.getItem('token')}`,
-      //     'Content-Type': 'application/json',
-      //   },
-      // });
-      // const data = await response.json();
-      // setProjects(data.results);
-      
-      // Mock data for development
-      setProjects(mockDraftProjects);
-    } catch (error) {
+      const response: any = await projectsAPI.getProjects();
+      // Handle paginated or flat array
+      if (Array.isArray(response)) {
+        setProjects(response);
+      } else if (response && Array.isArray(response.results)) {
+        setProjects(response.results);
+      } else {
+        setProjects([]);
+      }
+    } catch (error: any) {
       console.error('Error fetching projects:', error);
       toast({
-        title: "Error",
-        description: "Failed to fetch projects",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Failed to fetch projects',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);

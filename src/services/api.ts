@@ -7,10 +7,9 @@
 
 import axios from 'axios';
 
-// Django API Integration
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
+// Use VITE_API_URL for base URL, default to /api for local dev
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
-// API Configuration
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -18,11 +17,11 @@ const api = axios.create({
   },
 });
 
-// Request interceptor to add auth token
+// Request interceptor to add JWT token
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('auth_token');
-  if (token) {
-    config.headers.Authorization = `Token ${token}`;
+  if (token && config.headers) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
@@ -44,17 +43,16 @@ api.interceptors.response.use(
 export const authAPI = {
   /**
    * User login
-   * Django endpoint: POST /api/auth/login/
+   * Django endpoint: POST /api/auth/token/
    */
   login: async (credentials: { username: string; password: string }) => {
-    const response = await api.post('/auth/login/', credentials);
-    const { user, token } = response.data;
+    const response = await api.post<{ access: string }>('/auth/token/', credentials);
+    const { access } = response.data;
     
     // Store auth data
-    localStorage.setItem('auth_token', token);
-    localStorage.setItem('user_data', JSON.stringify(user));
+    localStorage.setItem('auth_token', access);
     
-    return { user, token };
+    return response.data;
   },
 
   /**
@@ -73,6 +71,31 @@ export const authAPI = {
    */
   getProfile: async () => {
     const response = await api.get('/auth/profile/');
+    return response.data;
+  },
+
+  /**
+   * Admin user registration
+   * Django endpoint: POST /api/auth/register/
+   */
+  registerUser: async (userData: {
+    username: string;
+    email: string;
+    first_name?: string;
+    last_name?: string;
+    role: string;
+    password: string;
+  }) => {
+    const response = await api.post('/auth/register/', userData);
+    return response.data;
+  },
+
+  /**
+   * Get all users (admin only)
+   * Django endpoint: GET /api/auth/users/
+   */
+  getUsers: async () => {
+    const response = await api.get('/auth/users/');
     return response.data;
   },
 };
@@ -337,6 +360,46 @@ export const resourcesAPI = {
   getLaborRates: async () => {
     const response = await api.get('/resources/labor/');
     return response.data;
+  },
+
+  /**
+   * Suitability Criteria CRUD
+   * Django endpoint: /api/materials/suitability-criteria/
+   */
+  getSuitabilityCriteria: async () => {
+    const response = await api.get('/materials/suitability-criteria/');
+    return response.data;
+  },
+  createSuitabilityCriterion: async (data: any) => {
+    const response = await api.post('/materials/suitability-criteria/', data);
+    return response.data;
+  },
+  updateSuitabilityCriterion: async (id: string, data: any) => {
+    const response = await api.put(`/materials/suitability-criteria/${id}/`, data);
+    return response.data;
+  },
+  deleteSuitabilityCriterion: async (id: string) => {
+    await api.delete(`/materials/suitability-criteria/${id}/`);
+  },
+
+  /**
+   * Costing Rules CRUD
+   * Django endpoint: /api/materials/costing-rules/
+   */
+  getCostingRules: async () => {
+    const response = await api.get('/materials/costing-rules/');
+    return response.data;
+  },
+  createCostingRule: async (data: any) => {
+    const response = await api.post('/materials/costing-rules/', data);
+    return response.data;
+  },
+  updateCostingRule: async (id: string, data: any) => {
+    const response = await api.put(`/materials/costing-rules/${id}/`, data);
+    return response.data;
+  },
+  deleteCostingRule: async (id: string) => {
+    await api.delete(`/materials/costing-rules/${id}/`);
   },
 };
 
