@@ -110,7 +110,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = async () => {
-    await authAPI.logout();
+    try {
+      await authAPI.logout();
+    } catch (error) {
+      // Backend logout failed, but continue with cleanup
+      console.warn('Logout request failed:', error);
+    }
+    // Always clean up user state and storage
     setUser(null);
     localStorage.removeItem('tides_user');
     localStorage.removeItem('auth_token');

@@ -60,9 +60,16 @@ export const authAPI = {
    * Django endpoint: POST /api/auth/logout/
    */
   logout: async () => {
-    await api.post('/auth/logout/');
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user_data');
+    try {
+      await api.post('/auth/logout/');
+    } catch (error) {
+      // If logout fails on backend, we still want to clear local storage
+      console.warn('Backend logout failed, but continuing with local cleanup:', error);
+    } finally {
+      // Always clear local storage regardless of backend response
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('tides_user');
+    }
   },
 
   /**
