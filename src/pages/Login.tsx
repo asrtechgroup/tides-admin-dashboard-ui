@@ -8,16 +8,24 @@ import { Droplets } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
+const roleDashboardMap: Record<string, string> = {
+  Admin: '/admin-dashboard',
+  Engineer: '/engineer-dashboard',
+  Planner: '/planner-dashboard',
+  Viewer: '/viewer-dashboard',
+};
+
 const Login = () => {
-  const [username, setUsername] = useState('admin');   // ✅ use username instead of email
+  const [username, setUsername] = useState('admin');
   const [password, setPassword] = useState('admin123');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { login, isAuthenticated, user } = useAuth();
 
-  // Redirect to main dashboard after login - DashboardSelector will handle role-based content
+  // Role-based redirect after login using backend user role
   if (isAuthenticated && user) {
-    return <Navigate to="/" replace />;
+    const dashboardPath = roleDashboardMap[user.role] || '/viewer-dashboard';
+    return <Navigate to={dashboardPath} replace />;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -37,6 +37,10 @@ const App = () => (
               </ProtectedRoute>
             }>
               <Route index element={<Dashboard />} />
+              <Route path="admin-dashboard" element={<Dashboard />} />
+              <Route path="engineer-dashboard" element={<Dashboard />} />
+              <Route path="planner-dashboard" element={<Dashboard />} />
+              <Route path="viewer-dashboard" element={<Dashboard />} />
               <Route path="users" element={<UserManagement />} />
               <Route path="activity-logs" element={<ActivityLogs />} />
               <Route path="projects" element={<Projects />} />
