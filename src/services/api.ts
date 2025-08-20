@@ -8,7 +8,7 @@
 import axios from 'axios';
 
 // Django API Integration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -359,6 +359,15 @@ export const resourcesAPI = {
    */
   getLaborRates: async () => {
     const response = await api.get('/resources/labor/');
+    return response.data;
+  },
+
+  /**
+   * Get irrigation technologies
+   * Django endpoint: GET /api/resources/technologies/
+   */
+  getTechnologies: async () => {
+    const response = await api.get('/resources/technologies/');
     return response.data;
   },
 

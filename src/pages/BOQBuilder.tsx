@@ -39,10 +39,10 @@ const BOQBuilder = () => {
         boqAPI.getCostAnalysis(),
       ]);
 
-      setExistingProjects(projectsData.results || projectsData);
-      setMaterials(materialsData.results || materialsData);
-      setTechnologies(technologiesData.results || technologiesData);
-      setBoqAnalyses(analysesData.results || analysesData);
+      setExistingProjects(Array.isArray(projectsData) ? projectsData : (projectsData as any)?.results || []);
+      setMaterials(Array.isArray(materialsData) ? materialsData : (materialsData as any)?.results || []);
+      setTechnologies(Array.isArray(technologiesData) ? technologiesData : (technologiesData as any)?.results || []);
+      setBoqAnalyses(Array.isArray(analysesData) ? analysesData : (analysesData as any)?.results || []);
       setCostAnalysis(costData);
     } catch (error) {
       toast.error('Failed to load data: ' + handleAPIError(error));
@@ -127,11 +127,11 @@ const BOQBuilder = () => {
   const handleExportBOQ = async (analysisId: string, format: 'pdf' | 'excel') => {
     try {
       const result = await boqAPI.exportBOQ(analysisId, format);
-      toast.success(result.message || `BOQ exported in ${format} format`);
+      toast.success((result as any)?.message || `BOQ exported in ${format} format`);
       
       // Trigger download if URL is provided
-      if (result.download_url) {
-        window.open(result.download_url, '_blank');
+      if ((result as any)?.download_url) {
+        window.open((result as any).download_url, '_blank');
       }
     } catch (error) {
       toast.error('Failed to export BOQ: ' + handleAPIError(error));

@@ -36,9 +36,9 @@ const ResourcesSelectionStep: React.FC<ResourcesSelectionStepProps> = ({ data, o
         resourcesAPI.getLaborRates(),
       ]);
 
-      setMaterials(materialsData.results || materialsData);
-      setEquipment(equipmentData.results || equipmentData);
-      setLaborRates(laborData.results || laborData);
+      setMaterials(Array.isArray(materialsData) ? materialsData : (materialsData as any)?.results || []);
+      setEquipment(Array.isArray(equipmentData) ? equipmentData : (equipmentData as any)?.results || []);
+      setLaborRates(Array.isArray(laborData) ? laborData : (laborData as any)?.results || []);
     } catch (error) {
       console.error('Failed to load resources data:', error);
       // Use fallback mock data if API fails

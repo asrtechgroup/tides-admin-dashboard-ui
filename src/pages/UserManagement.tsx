@@ -34,8 +34,8 @@ const UserManagement = () => {
         // Try to handle paginated or flat array
         if (Array.isArray(response)) {
           setUsers(response);
-        } else if (response && Array.isArray(response.results)) {
-          setUsers(response.results);
+        } else if (response && Array.isArray((response as any).results)) {
+          setUsers((response as any).results);
         } else {
           setUsers([]);
         }
@@ -85,8 +85,8 @@ const UserManagement = () => {
       const response = await authAPI.getUsers();
       if (Array.isArray(response)) {
         setUsers(response);
-      } else if (response && Array.isArray(response.results)) {
-        setUsers(response.results);
+      } else if (response && Array.isArray((response as any).results)) {
+        setUsers((response as any).results);
       } else {
         setUsers([]);
       }
