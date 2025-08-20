@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +16,7 @@ const roleDashboardMap: Record<string, string> = {
 };
 
 const Login = () => {
-  const [email, setEmail] = useState('admin@tides.com');
+  const [username, setUsername] = useState('admin');   // ✅ use username instead of email
   const [password, setPassword] = useState('admin123');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,10 +33,10 @@ const Login = () => {
     setLoading(true);
     setError(null);
     try {
-      await login(email, password);
+      await login(username, password);   // ✅ pass username, not email
       toast.success('Successfully logged in!');
     } catch (error) {
-      setError('Invalid email or password. Please try again.');
+      setError('Invalid username or password. Please try again.');
       setPassword('');
       toast.error('Login failed. Please try again.');
     } finally {
@@ -59,13 +59,13 @@ const Login = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="username">Username</Label>
               <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
+                id="username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Enter your username"
                 required
               />
             </div>
@@ -93,9 +93,9 @@ const Login = () => {
           </form>
           <div className="mt-6 text-center text-sm text-stone-500 space-y-1">
             <div className="font-medium">Demo Credentials:</div>
-            <div>Admin: admin@tides.com / admin123</div>
-            <div>Engineer: engineer@tides.com / eng123</div>
-            <div>Planner: planner@tides.com / plan123</div>
+            <div>Admin: admin / admin123</div>
+            <div>Engineer: engineer / eng123</div>
+            <div>Planner: planner / plan123</div>
           </div>
         </CardContent>
       </Card>
