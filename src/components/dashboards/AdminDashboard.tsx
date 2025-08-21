@@ -1,10 +1,12 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { TrendingUp, Users, FolderOpen, Activity, Shield, UserPlus } from 'lucide-react';
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
   const adminKpiData = [
     {
       title: 'Total Users',
@@ -159,28 +161,40 @@ const AdminDashboard = () => {
             <CardDescription>System management tools</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <button className="w-full p-3 text-left bg-red-50 hover:bg-red-100 rounded-lg transition-colors border border-red-200">
+            <button 
+              onClick={() => navigate('/users')}
+              className="w-full p-3 text-left bg-red-50 hover:bg-red-100 rounded-lg transition-colors border border-red-200"
+            >
               <div className="font-medium text-red-800 flex items-center">
                 <UserPlus className="w-4 h-4 mr-2" />
                 Register New User
               </div>
               <div className="text-sm text-red-600">Add engineers and planners</div>
             </button>
-            <button className="w-full p-3 text-left bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors border border-blue-200">
+            <button 
+              onClick={() => navigate('/users')}
+              className="w-full p-3 text-left bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors border border-blue-200"
+            >
               <div className="font-medium text-blue-800 flex items-center">
                 <Users className="w-4 h-4 mr-2" />
                 Manage Users
               </div>
               <div className="text-sm text-blue-600">Edit roles and permissions</div>
             </button>
-            <button className="w-full p-3 text-left bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors border border-amber-200">
+            <button 
+              onClick={() => navigate('/activity-logs')}
+              className="w-full p-3 text-left bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors border border-amber-200"
+            >
               <div className="font-medium text-amber-800 flex items-center">
                 <Activity className="w-4 h-4 mr-2" />
                 View Activity Logs
               </div>
               <div className="text-sm text-amber-600">Monitor system usage</div>
             </button>
-            <button className="w-full p-3 text-left bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors border border-purple-200">
+            <button 
+              onClick={() => navigate('/settings')}
+              className="w-full p-3 text-left bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors border border-purple-200"
+            >
               <div className="font-medium text-purple-800 flex items-center">
                 <Shield className="w-4 h-4 mr-2" />
                 System Settings
