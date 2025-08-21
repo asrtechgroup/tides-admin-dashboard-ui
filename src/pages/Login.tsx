@@ -51,7 +51,7 @@ const Login = () => {
           <div className="mx-auto w-16 h-16 bg-emerald-600 rounded-full flex items-center justify-center mb-4">
             <Droplets className="w-8 h-8 text-white" />
           </div>
-          <CardTitle className="text-2xl font-bold text-stone-800">TIDES Admin</CardTitle>
+          <CardTitle className="text-2xl font-bold text-stone-800">TIDES System</CardTitle>
           <CardDescription className="text-stone-600">
             Technology-Integrated Development for Estimation & Sustainability
           </CardDescription>
