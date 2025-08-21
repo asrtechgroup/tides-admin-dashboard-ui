@@ -43,16 +43,35 @@ api.interceptors.response.use(
 export const authAPI = {
   /**
    * User login
-   * Django endpoint: POST /api/auth/token/
+   * Django endpoint: POST /api/auth/token/ (JWT) or POST /api/auth/login/
    */
   login: async (credentials: { username: string; password: string }) => {
-    const response = await api.post<{ access: string }>('/auth/token/', credentials);
-    const { access } = response.data;
-    
-    // Store auth data
-    localStorage.setItem('auth_token', access);
-    
-    return response.data;
+    try {
+      // Try JWT token endpoint first
+      const response = await api.post<{ access: string; refresh: string }>('/auth/token/', credentials);
+      const { access, refresh } = response.data;
+      
+      // Store auth data
+      localStorage.setItem('auth_token', access);
+      if (refresh) {
+        localStorage.setItem('refresh_token', refresh);
+      }
+      
+      return response.data;
+    } catch (error) {
+      // Fallback to custom login endpoint if JWT fails
+      console.warn('JWT login failed, trying custom login endpoint:', error);
+      const response = await api.post<{ access: string; refresh: string }>('/auth/login/', credentials);
+      const { access, refresh } = response.data;
+      
+      // Store auth data
+      localStorage.setItem('auth_token', access);
+      if (refresh) {
+        localStorage.setItem('refresh_token', refresh);
+      }
+      
+      return response.data;
+    }
   },
 
   /**
@@ -61,13 +80,15 @@ export const authAPI = {
    */
   logout: async () => {
     try {
-      await api.post('/auth/logout/');
+      const refreshToken = localStorage.getItem('refresh_token');
+      await api.post('/auth/logout/', { refresh: refreshToken });
     } catch (error) {
       // If logout fails on backend, we still want to clear local storage
       console.warn('Backend logout failed, but continuing with local cleanup:', error);
     } finally {
       // Always clear local storage regardless of backend response
       localStorage.removeItem('auth_token');
+      localStorage.removeItem('refresh_token');
       localStorage.removeItem('tides_user');
     }
   },
