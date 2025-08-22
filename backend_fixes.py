@@ -213,3 +213,209 @@ CORS_ALLOWED_ORIGINS = [
 
 CORS_ALLOW_CREDENTIALS = True
 """
+
+# ==============================================================================
+# MISSING RESOURCES & MATERIALS API ENDPOINTS
+# ==============================================================================
+
+# resources/views.py - Create this file or add to existing views
+class ResourcesViewSet(viewsets.GenericViewSet):
+    """
+    Resources management viewset
+    """
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    @action(detail=False, methods=['get'], url_path='materials')
+    def materials(self, request):
+        """
+        Get materials database
+        GET /api/resources/materials/
+        """
+        # Sample data - replace with your actual Material model
+        materials = [
+            {
+                'id': 1,
+                'name': 'PVC Pipe 4"',
+                'category': 'Pipes',
+                'unit': 'meter',
+                'cost_per_unit': 25.50,
+                'supplier': 'Local Supplier A'
+            },
+            {
+                'id': 2,
+                'name': 'Drip Emitter',
+                'category': 'Irrigation Components',
+                'unit': 'piece',
+                'cost_per_unit': 0.75,
+                'supplier': 'Irrigation Co.'
+            }
+        ]
+        return Response(materials)
+    
+    @action(detail=False, methods=['get'], url_path='equipment')
+    def equipment(self, request):
+        """
+        Get equipment database
+        GET /api/resources/equipment/
+        """
+        # Sample data - replace with your actual Equipment model
+        equipment = [
+            {
+                'id': 1,
+                'name': 'Excavator Small',
+                'category': 'Heavy Machinery',
+                'unit': 'hour',
+                'cost_per_unit': 150.00,
+                'supplier': 'Equipment Rental Co.'
+            },
+            {
+                'id': 2,
+                'name': 'Water Pump 5HP',
+                'category': 'Pumps',
+                'unit': 'piece',
+                'cost_per_unit': 850.00,
+                'supplier': 'Pump Solutions Ltd'
+            }
+        ]
+        return Response(equipment)
+    
+    @action(detail=False, methods=['get'], url_path='labor')
+    def labor(self, request):
+        """
+        Get labor rates
+        GET /api/resources/labor/
+        """
+        # Sample data - replace with your actual Labor model
+        labor = [
+            {
+                'id': 1,
+                'category': 'Skilled Technician',
+                'hourly_rate': 25.00,
+                'region': 'Urban',
+                'currency': 'USD'
+            },
+            {
+                'id': 2,
+                'category': 'General Labor',
+                'hourly_rate': 15.00,
+                'region': 'Rural',
+                'currency': 'USD'
+            }
+        ]
+        return Response(labor)
+    
+    @action(detail=False, methods=['get'], url_path='technologies')
+    def technologies(self, request):
+        """
+        Get irrigation technologies
+        GET /api/resources/technologies/
+        """
+        # Sample data - replace with your actual Technology model
+        technologies = [
+            {
+                'id': 1,
+                'name': 'Drip Irrigation',
+                'category': 'Micro Irrigation',
+                'efficiency': 90,
+                'cost_per_hectare': 1500.00,
+                'suitable_crops': ['Vegetables', 'Fruits']
+            },
+            {
+                'id': 2,
+                'name': 'Sprinkler Irrigation',
+                'category': 'Overhead Irrigation',
+                'efficiency': 75,
+                'cost_per_hectare': 1200.00,
+                'suitable_crops': ['Cereals', 'Forage']
+            }
+        ]
+        return Response(technologies)
+
+
+# materials/views.py - Create this file or add to existing views
+class MaterialsViewSet(viewsets.GenericViewSet):
+    """
+    Materials management viewset for suitability criteria and costing rules
+    """
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    @action(detail=False, methods=['get', 'post'], url_path='costing-rules')
+    def costing_rules(self, request):
+        """
+        Costing Rules CRUD
+        GET/POST /api/materials/costing-rules/
+        """
+        if request.method == 'GET':
+            # Sample data - replace with your actual CostingRule model
+            rules = [
+                {
+                    'id': 1,
+                    'rule_name': 'Material Cost Adjustment',
+                    'rule_type': 'percentage',
+                    'value': 15.0,
+                    'applies_to': 'materials',
+                    'region': 'remote_areas'
+                },
+                {
+                    'id': 2,
+                    'rule_name': 'Labor Cost Premium',
+                    'rule_type': 'multiplier',
+                    'value': 1.25,
+                    'applies_to': 'labor',
+                    'region': 'urban'
+                }
+            ]
+            return Response(rules)
+        
+        elif request.method == 'POST':
+            # Handle creation - implement your creation logic here
+            return Response({
+                'id': 3,
+                'message': 'Costing rule created successfully'
+            }, status=status.HTTP_201_CREATED)
+
+
+# ==============================================================================
+# URL PATTERNS - Add these to your urls.py files
+# ==============================================================================
+
+# Create resources/urls.py:
+"""
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import ResourcesViewSet
+
+router = DefaultRouter()
+router.register(r'', ResourcesViewSet, basename='resources')
+
+urlpatterns = [
+    path('', include(router.urls)),
+]
+"""
+
+# Update materials/urls.py (or create if it doesn't exist):
+"""
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import MaterialsViewSet
+
+router = DefaultRouter()
+router.register(r'', MaterialsViewSet, basename='materials')
+
+urlpatterns = [
+    path('', include(router.urls)),
+]
+"""
+
+# Add to main_project/urls.py:
+"""
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('api/auth/', include('authentication.urls')),
+    path('api/resources/', include('resources.urls')),  # ADD THIS LINE
+    path('api/materials/', include('materials.urls')),  # ADD THIS LINE
+    # ... other patterns
+]
+"""
