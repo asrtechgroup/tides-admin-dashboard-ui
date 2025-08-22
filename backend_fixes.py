@@ -215,22 +215,23 @@ CORS_ALLOW_CREDENTIALS = True
 """
 
 # ==============================================================================
-# MISSING RESOURCES & MATERIALS API ENDPOINTS
+# MATERIALS APP - ALL RESOURCES CONSOLIDATED
 # ==============================================================================
 
-# resources/views.py - Create this file or add to existing views
-class ResourcesViewSet(viewsets.GenericViewSet):
+# materials/views.py - Add to existing views or create
+class MaterialsViewSet(viewsets.GenericViewSet):
     """
-    Resources management viewset
+    Materials management viewset for all resources, suitability criteria and costing rules
     """
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     
+    # RESOURCES ENDPOINTS
     @action(detail=False, methods=['get'], url_path='materials')
     def materials(self, request):
         """
         Get materials database
-        GET /api/resources/materials/
+        GET /api/materials/materials/
         """
         # Sample data - replace with your actual Material model
         materials = [
@@ -257,7 +258,7 @@ class ResourcesViewSet(viewsets.GenericViewSet):
     def equipment(self, request):
         """
         Get equipment database
-        GET /api/resources/equipment/
+        GET /api/materials/equipment/
         """
         # Sample data - replace with your actual Equipment model
         equipment = [
@@ -284,7 +285,7 @@ class ResourcesViewSet(viewsets.GenericViewSet):
     def labor(self, request):
         """
         Get labor rates
-        GET /api/resources/labor/
+        GET /api/materials/labor/
         """
         # Sample data - replace with your actual Labor model
         labor = [
@@ -309,7 +310,7 @@ class ResourcesViewSet(viewsets.GenericViewSet):
     def technologies(self, request):
         """
         Get irrigation technologies
-        GET /api/resources/technologies/
+        GET /api/materials/technologies/
         """
         # Sample data - replace with your actual Technology model
         technologies = [
@@ -331,16 +332,8 @@ class ResourcesViewSet(viewsets.GenericViewSet):
             }
         ]
         return Response(technologies)
-
-
-# materials/views.py - Create this file or add to existing views
-class MaterialsViewSet(viewsets.GenericViewSet):
-    """
-    Materials management viewset for suitability criteria and costing rules
-    """
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
     
+    # EXISTING ENDPOINTS
     @action(detail=False, methods=['get', 'post'], url_path='costing-rules')
     def costing_rules(self, request):
         """
@@ -375,27 +368,47 @@ class MaterialsViewSet(viewsets.GenericViewSet):
                 'id': 3,
                 'message': 'Costing rule created successfully'
             }, status=status.HTTP_201_CREATED)
+    
+    @action(detail=False, methods=['get', 'post'], url_path='suitability-criteria')
+    def suitability_criteria(self, request):
+        """
+        Suitability Criteria CRUD
+        GET/POST /api/materials/suitability-criteria/
+        """
+        if request.method == 'GET':
+            # This endpoint seems to be working based on the logs
+            criteria = [
+                {
+                    'id': 1,
+                    'name': 'Soil Type Compatibility',
+                    'parameter': 'soil_type',
+                    'suitable_values': ['clay', 'loam', 'sandy_loam'],
+                    'technology': 'drip_irrigation'
+                },
+                {
+                    'id': 2,
+                    'name': 'Water Quality Requirements',
+                    'parameter': 'water_salinity',
+                    'max_value': 2000,
+                    'unit': 'ppm',
+                    'technology': 'sprinkler_irrigation'
+                }
+            ]
+            return Response(criteria)
+        
+        elif request.method == 'POST':
+            # Handle creation - implement your creation logic here
+            return Response({
+                'id': 3,
+                'message': 'Suitability criterion created successfully'
+            }, status=status.HTTP_201_CREATED)
 
 
 # ==============================================================================
-# URL PATTERNS - Add these to your urls.py files
+# URL PATTERNS - Update your urls.py files
 # ==============================================================================
 
-# Create resources/urls.py:
-"""
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from .views import ResourcesViewSet
-
-router = DefaultRouter()
-router.register(r'', ResourcesViewSet, basename='resources')
-
-urlpatterns = [
-    path('', include(router.urls)),
-]
-"""
-
-# Update materials/urls.py (or create if it doesn't exist):
+# materials/urls.py - Update your existing materials URLs
 """
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
@@ -409,13 +422,12 @@ urlpatterns = [
 ]
 """
 
-# Add to main_project/urls.py:
+# main_project/urls.py - Only need materials app, no separate resources app
 """
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/', include('authentication.urls')),
-    path('api/resources/', include('resources.urls')),  # ADD THIS LINE
-    path('api/materials/', include('materials.urls')),  # ADD THIS LINE
+    path('api/materials/', include('materials.urls')),  # All resources go through materials
     # ... other patterns
 ]
 """

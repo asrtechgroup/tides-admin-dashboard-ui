@@ -365,37 +365,37 @@ export const projectsAPI = {
 export const resourcesAPI = {
   /**
    * Get materials
-   * Django endpoint: GET /api/resources/materials/
+   * Django endpoint: GET /api/materials/materials/
    */
   getMaterials: async () => {
-    const response = await api.get('/resources/materials/');
+    const response = await api.get('/materials/materials/');
     return response.data;
   },
 
   /**
    * Get equipment
-   * Django endpoint: GET /api/resources/equipment/
+   * Django endpoint: GET /api/materials/equipment/
    */
   getEquipment: async () => {
-    const response = await api.get('/resources/equipment/');
+    const response = await api.get('/materials/equipment/');
     return response.data;
   },
 
   /**
    * Get labor rates
-   * Django endpoint: GET /api/resources/labor/
+   * Django endpoint: GET /api/materials/labor/
    */
   getLaborRates: async () => {
-    const response = await api.get('/resources/labor/');
+    const response = await api.get('/materials/labor/');
     return response.data;
   },
 
   /**
    * Get irrigation technologies
-   * Django endpoint: GET /api/resources/technologies/
+   * Django endpoint: GET /api/materials/technologies/
    */
   getTechnologies: async () => {
-    const response = await api.get('/resources/technologies/');
+    const response = await api.get('/materials/technologies/');
     return response.data;
   },
 
