@@ -15,6 +15,7 @@ export const useTechnologySelection = () => {
         const data = await resourcesAPI.getTechnologies();
         setTechnologies(data as TechnologyEntry[]);
       } catch (error) {
+        console.error('Failed to load technology options:', error);
         toast.error('Failed to load technology options');
         setTechnologies([]);
       } finally {
