@@ -8,7 +8,7 @@ import ResourceCategoryForm from './resources/ResourceCategoryForm';
 import ResourcesTable from './resources/ResourcesTable';
 import ResourceSummaryCard from './resources/ResourceSummaryCard';
 import ProjectTotalCard from './resources/ProjectTotalCard';
-import { resourcesAPI } from '@/services/api';
+import { materialsAPI } from '@/services/api';
 
 interface ResourcesSelectionStepProps {
   data: ResourceItem[];
@@ -31,9 +31,9 @@ const ResourcesSelectionStep: React.FC<ResourcesSelectionStepProps> = ({ data, o
     try {
       setLoading(true);
       const [materialsData, equipmentData, laborData] = await Promise.all([
-        resourcesAPI.getMaterials(),
-        resourcesAPI.getEquipment(),
-        resourcesAPI.getLaborRates(),
+        materialsAPI.getMaterials(),
+        materialsAPI.getEquipment(),
+        materialsAPI.getLaborRates(),
       ]);
 
       setMaterials(Array.isArray(materialsData) ? materialsData : (materialsData as any)?.results || []);

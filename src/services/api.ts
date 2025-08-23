@@ -361,8 +361,8 @@ export const projectsAPI = {
   },
 };
 
-// Resources API
-export const resourcesAPI = {
+// Materials API - All resources, technologies, equipment, labor consolidated
+export const materialsAPI = {
   /**
    * Get materials
    * Django endpoint: GET /api/materials/materials/
@@ -397,6 +397,32 @@ export const resourcesAPI = {
   getTechnologies: async () => {
     const response = await api.get('/materials/technologies/');
     return response.data;
+  },
+
+  /**
+   * Create irrigation technology
+   * Django endpoint: POST /api/materials/technologies/
+   */
+  createTechnology: async (data: any) => {
+    const response = await api.post('/materials/technologies/', data);
+    return response.data;
+  },
+
+  /**
+   * Update irrigation technology
+   * Django endpoint: PUT /api/materials/technologies/{id}/
+   */
+  updateTechnology: async (id: string, data: any) => {
+    const response = await api.put(`/materials/technologies/${id}/`, data);
+    return response.data;
+  },
+
+  /**
+   * Delete irrigation technology
+   * Django endpoint: DELETE /api/materials/technologies/{id}/
+   */
+  deleteTechnology: async (id: string) => {
+    await api.delete(`/materials/technologies/${id}/`);
   },
 
   /**

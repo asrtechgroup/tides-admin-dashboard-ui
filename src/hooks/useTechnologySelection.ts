@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { TechnologyEntry } from '@/types/irrigation';
 import { toast } from 'sonner';
-import { resourcesAPI } from '@/services/api';
+import { materialsAPI } from '@/services/api';
 
 export const useTechnologySelection = () => {
   const [technologies, setTechnologies] = useState<TechnologyEntry[]>([]);
@@ -12,7 +12,7 @@ export const useTechnologySelection = () => {
     const fetchTechnologies = async () => {
       try {
         setLoading(true);
-        const data = await resourcesAPI.getTechnologies();
+        const data = await materialsAPI.getTechnologies();
         setTechnologies(data as TechnologyEntry[]);
       } catch (error) {
         console.error('Failed to load technology options:', error);

@@ -11,7 +11,7 @@ import EquipmentTable from '@/components/resources/EquipmentTable';
 import LaborForm from '@/components/resources/LaborForm';
 import LaborTable from '@/components/resources/LaborTable';
 import { toast } from 'sonner';
-import { resourcesAPI } from '@/services/api';
+import { materialsAPI } from '@/services/api';
 
 const Resources = () => {
   // Materials, Equipment, Labor state
@@ -32,9 +32,9 @@ const Resources = () => {
     const fetchResources = async () => {
       try {
         const [materialsData, equipmentData, laborData]: any = await Promise.all([
-          resourcesAPI.getMaterials(),
-          resourcesAPI.getEquipment(),
-          resourcesAPI.getLaborRates(),
+          materialsAPI.getMaterials(),
+          materialsAPI.getEquipment(),
+          materialsAPI.getLaborRates(),
         ]);
         setMaterials(materialsData.results || materialsData);
         setEquipment(equipmentData.results || equipmentData);

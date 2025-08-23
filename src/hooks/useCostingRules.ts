@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { resourcesAPI } from '@/services/api';
+import { materialsAPI } from '@/services/api';
 import { CostingRule } from '@/types/irrigation';
 
 export const useCostingRules = () => {
@@ -11,7 +11,7 @@ export const useCostingRules = () => {
   // Fetch from backend on mount and after any change
   const fetchCostingRules = async () => {
     try {
-      const data: any = await resourcesAPI.getCostingRules();
+      const data: any = await materialsAPI.getCostingRules();
       setCostingRules(data.results || data);
     } catch (error) {
       toast.error('Failed to load costing rules from backend.');
@@ -25,7 +25,7 @@ export const useCostingRules = () => {
 
   const handleAddCostingRule = async (data: any) => {
     try {
-      await resourcesAPI.createCostingRule(data);
+      await materialsAPI.createCostingRule(data);
       toast.success('Costing rule added successfully');
       setShowCostingForm(false);
       fetchCostingRules();
@@ -42,7 +42,7 @@ export const useCostingRules = () => {
   const handleUpdateCostingRule = async (data: any) => {
     if (!editingCostingRule) return;
     try {
-      await resourcesAPI.updateCostingRule(editingCostingRule.component, data);
+      await materialsAPI.updateCostingRule(editingCostingRule.component, data);
       toast.success('Costing rule updated successfully');
       setShowCostingForm(false);
       setEditingCostingRule(undefined);
@@ -54,7 +54,7 @@ export const useCostingRules = () => {
 
   const handleDeleteCostingRule = async (component: string) => {
     try {
-      await resourcesAPI.deleteCostingRule(component);
+      await materialsAPI.deleteCostingRule(component);
       toast.success('Costing rule deleted successfully');
       fetchCostingRules();
     } catch (error) {

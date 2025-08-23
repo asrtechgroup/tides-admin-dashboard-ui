@@ -2,6 +2,8 @@
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework import status
+from django.utils import timezone
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework_gis.filters import InBBoxFilter
 from django_filters.rest_framework import DjangoFilterBackend
@@ -451,6 +453,47 @@ class MaterialsViewSet(viewsets.GenericViewSet):
             }
         ]
         return Response(technologies)
+    
+    @action(detail=False, methods=['post'], url_path='technologies')
+    def create_technology(self, request):
+        """
+        Create new irrigation technology
+        POST /api/materials/technologies/
+        """
+        data = request.data
+        # In real implementation, create TechnologyEntry instance
+        # For now, return success response with the data
+        new_technology = {
+            'id': len(data) + 10,  # Mock ID generation
+            **data,
+            'created_at': timezone.now().isoformat(),
+            'updated_at': timezone.now().isoformat()
+        }
+        return Response(new_technology, status=status.HTTP_201_CREATED)
+    
+    @action(detail=False, methods=['put'], url_path=r'technologies/(?P<tech_id>[^/.]+)')
+    def update_technology(self, request, tech_id=None):
+        """
+        Update irrigation technology
+        PUT /api/materials/technologies/{id}/
+        """
+        data = request.data
+        # In real implementation, update TechnologyEntry instance
+        updated_technology = {
+            'id': tech_id,
+            **data,
+            'updated_at': timezone.now().isoformat()
+        }
+        return Response(updated_technology)
+    
+    @action(detail=False, methods=['delete'], url_path=r'technologies/(?P<tech_id>[^/.]+)')
+    def delete_technology(self, request, tech_id=None):
+        """
+        Delete irrigation technology
+        DELETE /api/materials/technologies/{id}/
+        """
+        # In real implementation, delete TechnologyEntry instance
+        return Response(status=status.HTTP_204_NO_CONTENT)
     
     # EXISTING ENDPOINTS
     @action(detail=False, methods=['get', 'post'], url_path='costing-rules')

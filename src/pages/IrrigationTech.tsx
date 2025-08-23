@@ -19,7 +19,7 @@ const IrrigationTech = () => {
     setShowTechnologyForm,
     handleAddTechnology,
     handleEditTechnology,
-    handleUpdateTechnology,
+    handleSubmitTechnology,
     handleDeleteTechnology,
     handleCancelForm,
   } = useIrrigationTechnologies();
@@ -145,7 +145,7 @@ const IrrigationTech = () => {
             onShowForm={() => setShowTechnologyForm(true)}
             onEdit={handleEditTechnology}
             onDelete={handleDeleteTechnology}
-            onSubmit={editingTechnology ? handleUpdateTechnology : handleAddTechnology}
+            onSubmit={handleSubmitTechnology}
             onCancel={handleCancelForm}
           />
         </TabsContent>
