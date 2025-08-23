@@ -218,6 +218,60 @@ CORS_ALLOW_CREDENTIALS = True
 # MATERIALS APP - ALL RESOURCES CONSOLIDATED
 # ==============================================================================
 
+# =================
+# TECHNOLOGY ENTRY MODEL FOR MATERIALS APP
+# =================
+
+class TechnologyEntry(models.Model):
+    """
+    Represents a technology entry with irrigation type and all suitability criteria.
+    Example: Pressurized Irrigation Technology -> Drip Irrigation.
+    Frontend Integration: TechnologySelectionStep.tsx, useTechnologySelection.ts
+    """
+
+    TECHNOLOGY_CHOICES = [
+        ('surface', 'Surface Irrigation Technology'),
+        ('subsurface', 'Subsurface Irrigation Technology'),
+        ('pressurized', 'Pressurized Irrigation Technology'),
+    ]
+
+    MAINTENANCE_LEVELS = [
+        ('low', 'Low'),
+        ('medium', 'Medium'),
+        ('high', 'High'),
+    ]
+
+    # Core fields
+    technology_name = models.CharField(max_length=50, choices=TECHNOLOGY_CHOICES)
+    irrigation_type = models.CharField(max_length=100)  # validated on frontend
+    description = models.TextField(blank=True, null=True)
+
+    efficiency = models.DecimalField(max_digits=5, decimal_places=2, help_text="Efficiency in %")
+    water_requirement = models.DecimalField(max_digits=6, decimal_places=2, help_text="Liters/m²/day")
+    lifespan = models.PositiveIntegerField(help_text="Lifespan in years")
+    maintenance_level = models.CharField(max_length=10, choices=MAINTENANCE_LEVELS)
+
+    # Suitability criteria
+    suitable_soil_types = models.JSONField(default=list)  
+    suitable_crop_types = models.JSONField(default=list)  
+    suitable_farm_sizes = models.JSONField(default=list)  
+    water_quality_requirements = models.JSONField(default=list)  
+    suitable_topography = models.JSONField(default=list)  
+    climate_zones = models.JSONField(default=list)  
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.get_technology_name_display()} - {self.irrigation_type}"
+
+    class Meta:
+        db_table = 'materials_technologyentry'
+        verbose_name_plural = "Technology Entries"
+        unique_together = ['technology_name', 'irrigation_type']
+
+# =================
+
 # materials/views.py - Add to existing views or create
 class MaterialsViewSet(viewsets.GenericViewSet):
     """
@@ -309,26 +363,91 @@ class MaterialsViewSet(viewsets.GenericViewSet):
     @action(detail=False, methods=['get'], url_path='technologies')
     def technologies(self, request):
         """
-        Get irrigation technologies
+        Get irrigation technologies with comprehensive data
         GET /api/materials/technologies/
+        Frontend Integration: useTechnologySelection.ts, TechnologySelectionStep.tsx
         """
-        # Sample data - replace with your actual Technology model
+        # Sample data that matches TechnologyEntry model - replace with actual queryset
         technologies = [
             {
                 'id': 1,
-                'name': 'Drip Irrigation',
-                'category': 'Micro Irrigation',
-                'efficiency': 90,
-                'cost_per_hectare': 1500.00,
-                'suitable_crops': ['Vegetables', 'Fruits']
+                'technology_name': 'surface',
+                'irrigation_type': 'Basin Irrigation',
+                'description': 'Traditional surface irrigation method suitable for rice and wheat',
+                'efficiency': 60.0,
+                'water_requirement': 1200.0,
+                'lifespan': 15,
+                'maintenance_level': 'low',
+                'suitable_soil_types': ['Clay', 'Loam'],
+                'suitable_crop_types': ['Rice', 'Wheat', 'Maize'],
+                'suitable_farm_sizes': ['Small (< 2 ha)', 'Medium (2-10 ha)'],
+                'water_quality_requirements': ['Fresh Water', 'Groundwater'],
+                'suitable_topography': ['Flat'],
+                'climate_zones': ['Tropical', 'Temperate']
             },
             {
                 'id': 2,
-                'name': 'Sprinkler Irrigation',
-                'category': 'Overhead Irrigation',
-                'efficiency': 75,
-                'cost_per_hectare': 1200.00,
-                'suitable_crops': ['Cereals', 'Forage']
+                'technology_name': 'surface',
+                'irrigation_type': 'Furrow Irrigation',
+                'description': 'Row crop irrigation using furrows between crop rows',
+                'efficiency': 65.0,
+                'water_requirement': 1100.0,
+                'lifespan': 12,
+                'maintenance_level': 'low',
+                'suitable_soil_types': ['Sandy', 'Loam'],
+                'suitable_crop_types': ['Vegetables', 'Cotton', 'Maize'],
+                'suitable_farm_sizes': ['Medium (2-10 ha)', 'Large (> 10 ha)'],
+                'water_quality_requirements': ['Fresh Water', 'Groundwater'],
+                'suitable_topography': ['Gentle Slope'],
+                'climate_zones': ['Arid', 'Semi-Arid', 'Temperate']
+            },
+            {
+                'id': 3,
+                'technology_name': 'pressurized',
+                'irrigation_type': 'Drip Irrigation',
+                'description': 'High-efficiency micro-irrigation delivering water directly to root zone',
+                'efficiency': 90.0,
+                'water_requirement': 650.0,
+                'lifespan': 8,
+                'maintenance_level': 'medium',
+                'suitable_soil_types': ['Sandy', 'Loam', 'Clay'],
+                'suitable_crop_types': ['Vegetables', 'Fruits', 'Cotton'],
+                'suitable_farm_sizes': ['Small (< 2 ha)', 'Medium (2-10 ha)', 'Large (> 10 ha)'],
+                'water_quality_requirements': ['Fresh Water', 'Treated Wastewater'],
+                'suitable_topography': ['Flat', 'Gentle Slope', 'Steep Slope'],
+                'climate_zones': ['Arid', 'Semi-Arid', 'Tropical']
+            },
+            {
+                'id': 4,
+                'technology_name': 'pressurized',
+                'irrigation_type': 'Sprinkler Systems',
+                'description': 'Overhead irrigation simulating natural rainfall',
+                'efficiency': 75.0,
+                'water_requirement': 850.0,
+                'lifespan': 12,
+                'maintenance_level': 'medium',
+                'suitable_soil_types': ['Sandy', 'Loam', 'Silt'],
+                'suitable_crop_types': ['Rice', 'Wheat', 'Vegetables', 'Fruits'],
+                'suitable_farm_sizes': ['Medium (2-10 ha)', 'Large (> 10 ha)'],
+                'water_quality_requirements': ['Fresh Water', 'Groundwater'],
+                'suitable_topography': ['Flat', 'Gentle Slope'],
+                'climate_zones': ['Temperate', 'Humid', 'Semi-Arid']
+            },
+            {
+                'id': 5,
+                'technology_name': 'subsurface',
+                'irrigation_type': 'Subsurface Drip',
+                'description': 'Underground drip irrigation for maximum water efficiency',
+                'efficiency': 95.0,
+                'water_requirement': 600.0,
+                'lifespan': 10,
+                'maintenance_level': 'high',
+                'suitable_soil_types': ['Sandy', 'Loam'],
+                'suitable_crop_types': ['Vegetables', 'Fruits', 'Cotton'],
+                'suitable_farm_sizes': ['Small (< 2 ha)', 'Medium (2-10 ha)'],
+                'water_quality_requirements': ['Fresh Water', 'Treated Wastewater'],
+                'suitable_topography': ['Flat', 'Gentle Slope'],
+                'climate_zones': ['Arid', 'Semi-Arid']
             }
         ]
         return Response(technologies)
