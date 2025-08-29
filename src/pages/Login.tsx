@@ -16,6 +16,8 @@ const roleDashboardMap: Record<string, string> = {
 };
 
 const Login = () => {
+  const [username, setUsername] = useState(false);
+  const [password, setPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { login, isAuthenticated, user } = useAuth();
