@@ -16,8 +16,6 @@ const roleDashboardMap: Record<string, string> = {
 };
 
 const Login = () => {
-  const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('admin123');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { login, isAuthenticated, user } = useAuth();
@@ -91,12 +89,6 @@ const Login = () => {
               {loading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
-          <div className="mt-6 text-center text-sm text-stone-500 space-y-1">
-            <div className="font-medium">Demo Credentials:</div>
-            <div>Admin: admin / admin123</div>
-            <div>Engineer: engineer / eng123</div>
-            <div>Planner: planner / plan123</div>
-          </div>
         </CardContent>
       </Card>
     </div>
