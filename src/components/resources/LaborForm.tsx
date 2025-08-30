@@ -62,9 +62,22 @@ const LaborForm: React.FC<LaborFormProps> = ({ labor, onSubmit, onCancel }) => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Skill/Trade</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g., Plumber, Electrician" {...field} />
-                    </FormControl>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select skill/trade" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="general">General Labor</SelectItem>
+                        <SelectItem value="plumber">Plumber</SelectItem>
+                        <SelectItem value="electrician">Electrician</SelectItem>
+                        <SelectItem value="operator">Equipment Operator</SelectItem>
+                        <SelectItem value="technician">Technician</SelectItem>
+                        <SelectItem value="supervisor">Supervisor</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

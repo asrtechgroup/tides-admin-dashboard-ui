@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Zone, ZoneFormData } from '@/types/gis';
 import { calculateArea, handleExportZones } from '@/utils/gis-utils';
-import { sampleZones } from '@/data/sample-zones';
+// import removed: sampleZones is obsolete, use backend data
 import MapComponent from '@/components/gis/MapComponent';
 import ZonePropertiesPanel from '@/components/gis/ZonePropertiesPanel';
 import ZonesList from '@/components/gis/ZonesList';
@@ -137,8 +137,7 @@ const GISPlanning = () => {
       // const data = await response.json();
       // setZones(data.results);
       
-      // Mock data for development
-      setZones(sampleZones);
+  // Fetch real zones from backend here if not already
     } catch (error) {
       console.error('Error loading zones:', error);
     } finally {
@@ -182,7 +181,7 @@ const GISPlanning = () => {
   };
 
   useEffect(() => {
-    setZones(sampleZones);
+  // setZones should be called with real backend data
   }, []);
 
   const onCreated = (e: any) => {
