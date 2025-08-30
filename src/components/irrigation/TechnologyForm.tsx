@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,13 +15,15 @@ interface TechnologyFormProps {
 
 const TechnologyForm: React.FC<TechnologyFormProps> = ({ technology, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState({
-    name: '',
-    type: 'drip' as 'drip' | 'sprinkler' | 'micro-spray' | 'surface' | 'subsurface',
+    technology_type: 'surface' as 'surface' | 'subsurface' | 'pressurized',
     description: '',
     efficiency: '',
     waterRequirement: '',
     maintenanceLevel: 'medium' as 'low' | 'medium' | 'high',
     lifespan: '',
+    cost_per_unit: '',
+    installation_cost: '',
+    maintenance_cost: '',
     soilTypes: [] as string[],
     cropTypes: [] as string[],
     farmSizes: [] as string[],
@@ -35,18 +36,21 @@ const TechnologyForm: React.FC<TechnologyFormProps> = ({ technology, onSubmit, o
     if (technology) {
       setFormData({
         name: technology.name,
-        type: technology.type,
+        technology_type: technology.technology_type,
         description: technology.description,
         efficiency: technology.efficiency.toString(),
         waterRequirement: technology.waterRequirement.toString(),
         maintenanceLevel: technology.maintenanceLevel,
         lifespan: technology.lifespan.toString(),
-        soilTypes: technology.suitabilityCriteria.soilTypes,
-        cropTypes: technology.suitabilityCriteria.cropTypes,
-        farmSizes: technology.suitabilityCriteria.farmSizes,
-        waterQuality: technology.suitabilityCriteria.waterQuality,
-        topography: technology.suitabilityCriteria.topography,
-        climateZones: technology.suitabilityCriteria.climateZones
+        cost_per_unit: technology.cost_per_unit?.toString() || '',
+        installation_cost: technology.installation_cost?.toString() || '',
+        maintenance_cost: technology.maintenance_cost?.toString() || '',
+        soilTypes: technology.suitabilityCriteria?.soilTypes || [],
+        cropTypes: technology.suitabilityCriteria?.cropTypes || [],
+        farmSizes: technology.suitabilityCriteria?.farmSizes || [],
+        waterQuality: technology.suitabilityCriteria?.waterQuality || [],
+        topography: technology.suitabilityCriteria?.topography || [],
+        climateZones: technology.suitabilityCriteria?.climateZones || []
       });
     }
   }, [technology]);
@@ -54,13 +58,15 @@ const TechnologyForm: React.FC<TechnologyFormProps> = ({ technology, onSubmit, o
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit({
-      name: formData.name,
-      type: formData.type,
+      technology_type: formData.technology_type,
       description: formData.description,
       efficiency: parseFloat(formData.efficiency),
       waterRequirement: parseFloat(formData.waterRequirement),
       maintenanceLevel: formData.maintenanceLevel,
       lifespan: parseInt(formData.lifespan),
+      cost_per_unit: parseFloat(formData.cost_per_unit),
+      installation_cost: parseFloat(formData.installation_cost),
+      maintenance_cost: parseFloat(formData.maintenance_cost),
       suitabilityCriteria: {
         soilTypes: formData.soilTypes,
         cropTypes: formData.cropTypes,
@@ -91,32 +97,101 @@ const TechnologyForm: React.FC<TechnologyFormProps> = ({ technology, onSubmit, o
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="name">Technology Name *</Label>
-          <Input
-            id="name"
-            value={formData.name}
-            onChange={(e) => setFormData({...formData, name: e.target.value})}
-            placeholder="Enter technology name"
-            required
-          />
-        </div>
         
         <div>
-          <Label htmlFor="type">Type *</Label>
-          <Select value={formData.type} onValueChange={(value: 'drip' | 'sprinkler' | 'micro-spray' | 'surface' | 'subsurface') => setFormData({...formData, type: value})}>
+          <Label htmlFor="technology_type">Technology Type *</Label>
+          <Select
+            value={formData.technology_type}
+            onValueChange={(value: 'surface' | 'subsurface' | 'pressurized') =>
+              setFormData({ ...formData, technology_type: value, irrigation_type: '' })
+            }
+          >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="drip">Drip</SelectItem>
-              <SelectItem value="sprinkler">Sprinkler</SelectItem>
-              <SelectItem value="micro-spray">Micro-spray</SelectItem>
-              <SelectItem value="surface">Surface</SelectItem>
-              <SelectItem value="subsurface">Subsurface</SelectItem>
+              <SelectItem value="surface">Surface Irrigation</SelectItem>
+              <SelectItem value="subsurface">Subsurface Irrigation</SelectItem>
+              <SelectItem value="pressurized">Pressurized Irrigation</SelectItem>
             </SelectContent>
           </Select>
         </div>
+        {formData.technology_type && (
+          <div>
+            <Label htmlFor="irrigation_type">Irrigation Type *</Label>
+            <Select
+              value={formData.irrigation_type}
+              onValueChange={(value: string) => setFormData({ ...formData, irrigation_type: value })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {formData.technology_type === 'surface' && (
+                  <>
+                    <SelectItem value="furrow">Furrow</SelectItem>
+                    <SelectItem value="basin">Basin</SelectItem>
+                    <SelectItem value="border-strip">Border Strip</SelectItem>
+                  </>
+                )}
+                {formData.technology_type === 'subsurface' && (
+                  <>
+                    <SelectItem value="drip">Drip</SelectItem>
+                    <SelectItem value="subsurface-drip">Subsurface Drip</SelectItem>
+                  </>
+                )}
+                {formData.technology_type === 'pressurized' && (
+                  <>
+                    <SelectItem value="sprinkler">Sprinkler</SelectItem>
+                    <SelectItem value="micro-sprinkler">Micro-Sprinkler</SelectItem>
+                    <SelectItem value="center-pivot">Center Pivot</SelectItem>
+                    <SelectItem value="lateral-move">Lateral Move</SelectItem>
+                    <SelectItem value="solid-set">Solid Set</SelectItem>
+                    <SelectItem value="traveling-gun">Traveling Gun</SelectItem>
+                  </>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <Label htmlFor="cost_per_unit">Cost per Unit *</Label>
+          <Input
+            id="cost_per_unit"
+            type="number"
+            min="0"
+            value={formData.cost_per_unit}
+            onChange={(e) => setFormData({...formData, cost_per_unit: e.target.value})}
+            placeholder="Enter cost per unit"
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="installation_cost">Installation Cost *</Label>
+          <Input
+            id="installation_cost"
+            type="number"
+            min="0"
+            value={formData.installation_cost}
+            onChange={(e) => setFormData({...formData, installation_cost: e.target.value})}
+            placeholder="Enter installation cost"
+            required
+          />
+        </div>
+        <div>
+          <Label htmlFor="maintenance_cost">Maintenance Cost *</Label>
+          <Input
+            id="maintenance_cost"
+            type="number"
+            min="0"
+            value={formData.maintenance_cost}
+            onChange={(e) => setFormData({...formData, maintenance_cost: e.target.value})}
+            placeholder="Enter maintenance cost"
+            required
+          />
+        </div>
+      </div>
       </div>
 
       <div>

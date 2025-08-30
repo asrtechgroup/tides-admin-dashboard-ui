@@ -6,6 +6,7 @@
  */
 
 import axios from 'axios';
+import { toast } from '@/hooks/use-toast';
 
 // Django API Integration
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api';
@@ -27,13 +28,25 @@ api.interceptors.request.use((config) => {
 });
 
 // Response interceptor for error handling
+let unauthorizedNotified = false;
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('user_data');
-      window.location.href = '/login';
+      if (!unauthorizedNotified) {
+        unauthorizedNotified = true;
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user_data');
+        toast({
+          title: 'Session expired',
+          description: 'You are not authorized. Please log in again.',
+        });
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 2500);
+      }
+      // Prevent further API calls until user logs in again
+      return Promise.reject({ ...error, unauthorized: true });
     }
     return Promise.reject(error);
   }
