@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { IrrigationTechnology } from '@/types/irrigation';
+import { TechnologyEntry } from '@/types/irrigation';
 import { toast } from 'sonner';
 import { materialsAPI } from '@/services/api';
 
 export const useIrrigationTechnologies = () => {
-  const [technologies, setTechnologies] = useState<IrrigationTechnology[]>([]);
+  const [technologies, setTechnologies] = useState<TechnologyEntry[]>([]);
   const [showTechnologyForm, setShowTechnologyForm] = useState(false);
-  const [editingTechnology, setEditingTechnology] = useState<IrrigationTechnology | undefined>();
+  const [editingTechnology, setEditingTechnology] = useState<TechnologyEntry | undefined>();
 
   useEffect(() => {
     const fetchTechnologies = async () => {
@@ -26,7 +26,7 @@ export const useIrrigationTechnologies = () => {
     setEditingTechnology(undefined);
   };
 
-  const handleEditTechnology = (technology: IrrigationTechnology) => {
+  const handleEditTechnology = (technology: TechnologyEntry) => {
     setEditingTechnology(technology);
     setShowTechnologyForm(true);
   };

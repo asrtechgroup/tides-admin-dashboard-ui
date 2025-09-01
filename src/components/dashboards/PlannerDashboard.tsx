@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { TrendingUp, MapPin, Calendar, Target, Map, BarChart3 } from 'lucide-react';
 import { projectsAPI } from '@/services/api';
+import { DashboardStats } from '@/types/irrigation';
 
 const PlannerDashboard = () => {
   const [kpiData, setKpiData] = useState<any[]>([]);
@@ -16,7 +17,7 @@ const PlannerDashboard = () => {
       setLoading(true);
       setError(null);
       try {
-        const stats = await projectsAPI.getDashboardStats();
+        const stats = await projectsAPI.getDashboardStats() as DashboardStats;
         setKpiData([
           {
             title: 'Planning Projects',

@@ -16,6 +16,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: false, // Set to true if your backend requires credentials
 });
 
 // Request interceptor to add JWT token

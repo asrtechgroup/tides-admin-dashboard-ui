@@ -1,382 +1,324 @@
 import React, { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { IrrigationTechnology } from '@/types/irrigation';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { X } from 'lucide-react';
+import { TechnologyEntry } from '@/types/irrigation';
+import { toast } from '@/hooks/use-toast';
 
 interface TechnologyFormProps {
-  technology?: IrrigationTechnology;
-  onSubmit: (data: any) => void;
-  onCancel: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSave: (technology: Partial<TechnologyEntry>) => void;
+  technology?: TechnologyEntry | null;
 }
 
-const TechnologyForm: React.FC<TechnologyFormProps> = ({ technology, onSubmit, onCancel }) => {
-  const [formData, setFormData] = useState({
-    technology_type: 'surface' as 'surface' | 'subsurface' | 'pressurized',
+interface FormData {
+  technology_name: 'surface' | 'subsurface' | 'pressurized';
+  irrigation_type: string;
+  description: string;
+  efficiency: string;
+  water_requirement: string;
+  maintenance_level: 'low' | 'medium' | 'high';
+  lifespan: string;
+  suitable_soil_types: string[];
+  suitable_crop_types: string[];
+  suitable_farm_sizes: string[];
+  water_quality_requirements: string[];
+  suitable_topography: string[];
+  climate_zones: string[];
+}
+
+const TechnologyForm: React.FC<TechnologyFormProps> = ({
+  open,
+  onOpenChange,
+  onSave,
+  technology
+}) => {
+  const [formData, setFormData] = useState<FormData>({
+    technology_name: 'surface',
+    irrigation_type: '',
     description: '',
     efficiency: '',
-    waterRequirement: '',
-    maintenanceLevel: 'medium' as 'low' | 'medium' | 'high',
+    water_requirement: '',
+    maintenance_level: 'low',
     lifespan: '',
-    cost_per_unit: '',
-    installation_cost: '',
-    maintenance_cost: '',
-    soilTypes: [] as string[],
-    cropTypes: [] as string[],
-    farmSizes: [] as string[],
-    waterQuality: [] as string[],
-    topography: [] as string[],
-    climateZones: [] as string[]
+    suitable_soil_types: [],
+    suitable_crop_types: [],
+    suitable_farm_sizes: [],
+    water_quality_requirements: [],
+    suitable_topography: [],
+    climate_zones: []
   });
+
+  const [newTag, setNewTag] = useState('');
+  const [activeTagField, setActiveTagField] = useState<keyof FormData | null>(null);
 
   useEffect(() => {
     if (technology) {
       setFormData({
-        name: technology.name,
-        technology_type: technology.technology_type,
-        description: technology.description,
+        technology_name: technology.technology_name,
+        irrigation_type: technology.irrigation_type,
+        description: technology.description || '',
         efficiency: technology.efficiency.toString(),
-        waterRequirement: technology.waterRequirement.toString(),
-        maintenanceLevel: technology.maintenanceLevel,
+        water_requirement: technology.water_requirement.toString(),
+        maintenance_level: technology.maintenance_level,
         lifespan: technology.lifespan.toString(),
-        cost_per_unit: technology.cost_per_unit?.toString() || '',
-        installation_cost: technology.installation_cost?.toString() || '',
-        maintenance_cost: technology.maintenance_cost?.toString() || '',
-        soilTypes: technology.suitabilityCriteria?.soilTypes || [],
-        cropTypes: technology.suitabilityCriteria?.cropTypes || [],
-        farmSizes: technology.suitabilityCriteria?.farmSizes || [],
-        waterQuality: technology.suitabilityCriteria?.waterQuality || [],
-        topography: technology.suitabilityCriteria?.topography || [],
-        climateZones: technology.suitabilityCriteria?.climateZones || []
+        suitable_soil_types: technology.suitable_soil_types || [],
+        suitable_crop_types: technology.suitable_crop_types || [],
+        suitable_farm_sizes: technology.suitable_farm_sizes || [],
+        water_quality_requirements: technology.water_quality_requirements || [],
+        suitable_topography: technology.suitable_topography || [],
+        climate_zones: technology.climate_zones || []
+      });
+    } else {
+      setFormData({
+        technology_name: 'surface',
+        irrigation_type: '',
+        description: '',
+        efficiency: '',
+        water_requirement: '',
+        maintenance_level: 'low',
+        lifespan: '',
+        suitable_soil_types: [],
+        suitable_crop_types: [],
+        suitable_farm_sizes: [],
+        water_quality_requirements: [],
+        suitable_topography: [],
+        climate_zones: []
       });
     }
-  }, [technology]);
+  }, [technology, open]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({
-      technology_type: formData.technology_type,
-      description: formData.description,
-      efficiency: parseFloat(formData.efficiency),
-      waterRequirement: parseFloat(formData.waterRequirement),
-      maintenanceLevel: formData.maintenanceLevel,
-      lifespan: parseInt(formData.lifespan),
-      cost_per_unit: parseFloat(formData.cost_per_unit),
-      installation_cost: parseFloat(formData.installation_cost),
-      maintenance_cost: parseFloat(formData.maintenance_cost),
-      suitabilityCriteria: {
-        soilTypes: formData.soilTypes,
-        cropTypes: formData.cropTypes,
-        farmSizes: formData.farmSizes,
-        waterQuality: formData.waterQuality,
-        topography: formData.topography,
-        climateZones: formData.climateZones
+    
+    try {
+      const technologyData: Partial<TechnologyEntry> = {
+        ...formData,
+        efficiency: parseFloat(formData.efficiency),
+        water_requirement: parseFloat(formData.water_requirement),
+        lifespan: parseInt(formData.lifespan, 10)
+      };
+
+      if (technology?.id) {
+        technologyData.id = technology.id;
       }
+
+      onSave(technologyData);
+      onOpenChange(false);
+      
+      toast({
+        title: "Success",
+        description: `Technology ${technology ? 'updated' : 'created'} successfully`
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save technology",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const addTag = (fieldName: keyof FormData) => {
+    if (newTag.trim() && activeTagField === fieldName) {
+      const currentTags = formData[fieldName] as string[];
+      if (!currentTags.includes(newTag.trim())) {
+        setFormData({
+          ...formData,
+          [fieldName]: [...currentTags, newTag.trim()]
+        });
+      }
+      setNewTag('');
+      setActiveTagField(null);
+    }
+  };
+
+  const removeTag = (fieldName: keyof FormData, tagToRemove: string) => {
+    const currentTags = formData[fieldName] as string[];
+    setFormData({
+      ...formData,
+      [fieldName]: currentTags.filter(tag => tag !== tagToRemove)
     });
   };
 
-  const handleCheckboxChange = (category: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [category]: prev[category as keyof typeof prev].includes(value)
-        ? (prev[category as keyof typeof prev] as string[]).filter(item => item !== value)
-        : [...(prev[category as keyof typeof prev] as string[]), value]
-    }));
+  const renderTagField = (fieldName: keyof FormData, label: string) => {
+    const tags = formData[fieldName] as string[];
+    
+    return (
+      <div className="space-y-2">
+        <Label>{label}</Label>
+        <div className="flex flex-wrap gap-2 mb-2">
+          {tags.map((tag, index) => (
+            <Badge key={index} variant="secondary" className="flex items-center gap-1">
+              {tag}
+              <X 
+                className="w-3 h-3 cursor-pointer" 
+                onClick={() => removeTag(fieldName, tag)}
+              />
+            </Badge>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <Input
+            value={activeTagField === fieldName ? newTag : ''}
+            onChange={(e) => {
+              setNewTag(e.target.value);
+              setActiveTagField(fieldName);
+            }}
+            placeholder={`Add ${label.toLowerCase()}`}
+            onKeyPress={(e) => e.key === 'Enter' && addTag(fieldName)}
+          />
+          <Button 
+            type="button" 
+            onClick={() => addTag(fieldName)}
+            disabled={!newTag.trim() || activeTagField !== fieldName}
+          >
+            Add
+          </Button>
+        </div>
+      </div>
+    );
   };
 
-  const soilOptions = ['clay', 'loam', 'sandy-loam', 'sandy'];
-  const cropOptions = ['vegetables', 'fruits', 'cereals', 'cash-crops'];
-  const farmSizeOptions = ['small', 'medium', 'large'];
-  const waterQualityOptions = ['good', 'moderate', 'poor'];
-  const topographyOptions = ['flat', 'gentle-slope', 'moderate-slope', 'steep-slope'];
-  const climateOptions = ['arid', 'semi-arid', 'humid', 'semi-humid'];
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        
-        <div>
-          <Label htmlFor="technology_type">Technology Type *</Label>
-          <Select
-            value={formData.technology_type}
-            onValueChange={(value: 'surface' | 'subsurface' | 'pressurized') =>
-              setFormData({ ...formData, technology_type: value, irrigation_type: '' })
-            }
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="surface">Surface Irrigation</SelectItem>
-              <SelectItem value="subsurface">Subsurface Irrigation</SelectItem>
-              <SelectItem value="pressurized">Pressurized Irrigation</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        {formData.technology_type && (
-          <div>
-            <Label htmlFor="irrigation_type">Irrigation Type *</Label>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>
+            {technology ? 'Edit Technology' : 'Add New Technology'}
+          </DialogTitle>
+          <DialogDescription>
+            Configure irrigation technology specifications and suitability criteria.
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="technology_name">Technology Name</Label>
+              <Select
+                value={formData.technology_name}
+                onValueChange={(value: 'surface' | 'subsurface' | 'pressurized') => 
+                  setFormData({ ...formData, technology_name: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="surface">Surface Irrigation Technology</SelectItem>
+                  <SelectItem value="subsurface">Subsurface Irrigation Technology</SelectItem>
+                  <SelectItem value="pressurized">Pressurized Irrigation Technology</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="irrigation_type">Irrigation Type</Label>
+              <Input
+                id="irrigation_type"
+                value={formData.irrigation_type}
+                onChange={(e) => setFormData({ ...formData, irrigation_type: e.target.value })}
+                placeholder="e.g., Drip Irrigation"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Describe the technology and its applications"
+            />
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="efficiency">Efficiency (%)</Label>
+              <Input
+                id="efficiency"
+                type="number"
+                step="0.01"
+                value={formData.efficiency}
+                onChange={(e) => setFormData({ ...formData, efficiency: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="water_requirement">Water Requirement (L/m²/day)</Label>
+              <Input
+                id="water_requirement"
+                type="number"
+                step="0.01"
+                value={formData.water_requirement}
+                onChange={(e) => setFormData({ ...formData, water_requirement: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="lifespan">Lifespan (years)</Label>
+              <Input
+                id="lifespan"
+                type="number"
+                value={formData.lifespan}
+                onChange={(e) => setFormData({ ...formData, lifespan: e.target.value })}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="maintenance_level">Maintenance Level</Label>
             <Select
-              value={formData.irrigation_type}
-              onValueChange={(value: string) => setFormData({ ...formData, irrigation_type: value })}
+              value={formData.maintenance_level}
+              onValueChange={(value: 'low' | 'medium' | 'high') => 
+                setFormData({ ...formData, maintenance_level: value })
+              }
             >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {formData.technology_type === 'surface' && (
-                  <>
-                    <SelectItem value="furrow">Furrow</SelectItem>
-                    <SelectItem value="basin">Basin</SelectItem>
-                    <SelectItem value="border-strip">Border Strip</SelectItem>
-                  </>
-                )}
-                {formData.technology_type === 'subsurface' && (
-                  <>
-                    <SelectItem value="drip">Drip</SelectItem>
-                    <SelectItem value="subsurface-drip">Subsurface Drip</SelectItem>
-                  </>
-                )}
-                {formData.technology_type === 'pressurized' && (
-                  <>
-                    <SelectItem value="sprinkler">Sprinkler</SelectItem>
-                    <SelectItem value="micro-sprinkler">Micro-Sprinkler</SelectItem>
-                    <SelectItem value="center-pivot">Center Pivot</SelectItem>
-                    <SelectItem value="lateral-move">Lateral Move</SelectItem>
-                    <SelectItem value="solid-set">Solid Set</SelectItem>
-                    <SelectItem value="traveling-gun">Traveling Gun</SelectItem>
-                  </>
-                )}
+                <SelectItem value="low">Low</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="high">High</SelectItem>
               </SelectContent>
             </Select>
           </div>
-        )}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <Label htmlFor="cost_per_unit">Cost per Unit *</Label>
-          <Input
-            id="cost_per_unit"
-            type="number"
-            min="0"
-            value={formData.cost_per_unit}
-            onChange={(e) => setFormData({...formData, cost_per_unit: e.target.value})}
-            placeholder="Enter cost per unit"
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="installation_cost">Installation Cost *</Label>
-          <Input
-            id="installation_cost"
-            type="number"
-            min="0"
-            value={formData.installation_cost}
-            onChange={(e) => setFormData({...formData, installation_cost: e.target.value})}
-            placeholder="Enter installation cost"
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="maintenance_cost">Maintenance Cost *</Label>
-          <Input
-            id="maintenance_cost"
-            type="number"
-            min="0"
-            value={formData.maintenance_cost}
-            onChange={(e) => setFormData({...formData, maintenance_cost: e.target.value})}
-            placeholder="Enter maintenance cost"
-            required
-          />
-        </div>
-      </div>
-      </div>
 
-      <div>
-        <Label htmlFor="description">Description *</Label>
-        <Textarea
-          id="description"
-          value={formData.description}
-          onChange={(e) => setFormData({...formData, description: e.target.value})}
-          placeholder="Describe the technology..."
-          rows={3}
-          required
-        />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <Label htmlFor="efficiency">Efficiency (%) *</Label>
-          <Input
-            id="efficiency"
-            type="number"
-            min="0"
-            max="100"
-            value={formData.efficiency}
-            onChange={(e) => setFormData({...formData, efficiency: e.target.value})}
-            placeholder="85"
-            required
-          />
-        </div>
-        
-        <div>
-          <Label htmlFor="waterRequirement">Water Requirement (L/m²/day) *</Label>
-          <Input
-            id="waterRequirement"
-            type="number"
-            step="0.1"
-            value={formData.waterRequirement}
-            onChange={(e) => setFormData({...formData, waterRequirement: e.target.value})}
-            placeholder="2.5"
-            required
-          />
-        </div>
-        
-        <div>
-          <Label htmlFor="lifespan">Lifespan (years) *</Label>
-          <Input
-            id="lifespan"
-            type="number"
-            value={formData.lifespan}
-            onChange={(e) => setFormData({...formData, lifespan: e.target.value})}
-            placeholder="15"
-            required
-          />
-        </div>
-      </div>
-
-      <div>
-        <Label htmlFor="maintenanceLevel">Maintenance Level *</Label>
-        <Select value={formData.maintenanceLevel} onValueChange={(value: 'low' | 'medium' | 'high') => setFormData({...formData, maintenanceLevel: value})}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="low">Low</SelectItem>
-            <SelectItem value="medium">Medium</SelectItem>
-            <SelectItem value="high">High</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Suitability criteria sections */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Suitability Criteria</h3>
-        
-        {/* Soil Types */}
-        <div>
-          <Label>Suitable Soil Types</Label>
-          <div className="grid grid-cols-2 gap-2 mt-2">
-            {soilOptions.map((soil) => (
-              <div key={soil} className="flex items-center space-x-2">
-                <Checkbox
-                  id={soil}
-                  checked={formData.soilTypes.includes(soil)}
-                  onCheckedChange={() => handleCheckboxChange('soilTypes', soil)}
-                />
-                <Label htmlFor={soil} className="capitalize">{soil}</Label>
-              </div>
-            ))}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Suitability Criteria</h3>
+            
+            {renderTagField('suitable_soil_types', 'Suitable Soil Types')}
+            {renderTagField('suitable_crop_types', 'Suitable Crop Types')}
+            {renderTagField('suitable_farm_sizes', 'Suitable Farm Sizes')}
+            {renderTagField('water_quality_requirements', 'Water Quality Requirements')}
+            {renderTagField('suitable_topography', 'Suitable Topography')}
+            {renderTagField('climate_zones', 'Climate Zones')}
           </div>
-        </div>
 
-        {/* Crop Types */}
-        <div>
-          <Label>Suitable Crop Types</Label>
-          <div className="grid grid-cols-2 gap-2 mt-2">
-            {cropOptions.map((crop) => (
-              <div key={crop} className="flex items-center space-x-2">
-                <Checkbox
-                  id={crop}
-                  checked={formData.cropTypes.includes(crop)}
-                  onCheckedChange={() => handleCheckboxChange('cropTypes', crop)}
-                />
-                <Label htmlFor={crop} className="capitalize">{crop}</Label>
-              </div>
-            ))}
+          <div className="flex gap-2 justify-end">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button type="submit">
+              {technology ? 'Update' : 'Create'} Technology
+            </Button>
           </div>
-        </div>
-
-        {/* Farm Sizes */}
-        <div>
-          <Label>Suitable Farm Sizes</Label>
-          <div className="grid grid-cols-3 gap-2 mt-2">
-            {farmSizeOptions.map((size) => (
-              <div key={size} className="flex items-center space-x-2">
-                <Checkbox
-                  id={size}
-                  checked={formData.farmSizes.includes(size)}
-                  onCheckedChange={() => handleCheckboxChange('farmSizes', size)}
-                />
-                <Label htmlFor={size} className="capitalize">{size}</Label>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Water Quality */}
-        <div>
-          <Label>Water Quality Requirements</Label>
-          <div className="grid grid-cols-3 gap-2 mt-2">
-            {waterQualityOptions.map((quality) => (
-              <div key={quality} className="flex items-center space-x-2">
-                <Checkbox
-                  id={quality}
-                  checked={formData.waterQuality.includes(quality)}
-                  onCheckedChange={() => handleCheckboxChange('waterQuality', quality)}
-                />
-                <Label htmlFor={quality} className="capitalize">{quality}</Label>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Topography */}
-        <div>
-          <Label>Suitable Topography</Label>
-          <div className="grid grid-cols-2 gap-2 mt-2">
-            {topographyOptions.map((topo) => (
-              <div key={topo} className="flex items-center space-x-2">
-                <Checkbox
-                  id={topo}
-                  checked={formData.topography.includes(topo)}
-                  onCheckedChange={() => handleCheckboxChange('topography', topo)}
-                />
-                <Label htmlFor={topo} className="capitalize">{topo.replace('-', ' ')}</Label>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Climate Zones */}
-        <div>
-          <Label>Climate Zones</Label>
-          <div className="grid grid-cols-2 gap-2 mt-2">
-            {climateOptions.map((climate) => (
-              <div key={climate} className="flex items-center space-x-2">
-                <Checkbox
-                  id={climate}
-                  checked={formData.climateZones.includes(climate)}
-                  onCheckedChange={() => handleCheckboxChange('climateZones', climate)}
-                />
-                <Label htmlFor={climate} className="capitalize">{climate.replace('-', ' ')}</Label>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="flex justify-end space-x-2">
-        <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button type="submit">
-          {technology ? 'Update' : 'Add'} Technology
-        </Button>
-      </div>
-    </form>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 };
 

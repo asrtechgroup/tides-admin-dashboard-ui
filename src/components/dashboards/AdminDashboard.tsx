@@ -3,8 +3,10 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { TrendingUp, Users, FolderOpen, Activity, Shield, UserPlus } from 'lucide-react';
-import { projectsAPI, authAPI } from '@/services/api';
+import { projectsAPI } from '@/services/api';
+import { DashboardStats } from '@/types/irrigation';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -18,7 +20,7 @@ const AdminDashboard = () => {
       setLoading(true);
       setError(null);
       try {
-        const stats = await projectsAPI.getDashboardStats();
+        const stats = await projectsAPI.getDashboardStats() as DashboardStats;
         // stats example: { total_users, total_projects, system_activity, security_alerts, kpi_changes, recent_activities }
         setKpiData([
           {

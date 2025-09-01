@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Eye, FolderOpen, BarChart3, MapPin } from 'lucide-react';
 import { projectsAPI } from '@/services/api';
+import { DashboardStats } from '@/types/irrigation';
 
 const ViewerDashboard = () => {
   const [kpiData, setKpiData] = useState<any[]>([]);
@@ -15,7 +16,7 @@ const ViewerDashboard = () => {
       setLoading(true);
       setError(null);
       try {
-        const stats = await projectsAPI.getDashboardStats();
+        const stats = await projectsAPI.getDashboardStats() as DashboardStats;
         setKpiData([
           {
             title: 'Projects Accessible',

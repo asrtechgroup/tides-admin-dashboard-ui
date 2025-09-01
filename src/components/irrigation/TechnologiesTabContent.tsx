@@ -2,16 +2,16 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { IrrigationTechnology } from '@/types/irrigation';
+import { TechnologyEntry } from '@/types/irrigation';
 import TechnologyForm from './TechnologyForm';
 import TechnologiesTable from './TechnologiesTable';
 
 interface TechnologiesTabContentProps {
-  technologies: IrrigationTechnology[];
+  technologies: TechnologyEntry[];
   showTechnologyForm: boolean;
-  editingTechnology: IrrigationTechnology | undefined;
+  editingTechnology: TechnologyEntry | undefined;
   onShowForm: () => void;
-  onEdit: (technology: IrrigationTechnology) => void;
+  onEdit: (technology: TechnologyEntry) => void;
   onDelete: (id: string) => void;
   onSubmit: (data: any) => void;
   onCancel: () => void;
@@ -30,9 +30,10 @@ const TechnologiesTabContent: React.FC<TechnologiesTabContentProps> = ({
   if (showTechnologyForm) {
     return (
       <TechnologyForm
+        open={showTechnologyForm}
+        onOpenChange={(open) => !open && onCancel()}
+        onSave={onSubmit}
         technology={editingTechnology}
-        onSubmit={onSubmit}
-        onCancel={onCancel}
       />
     );
   }
