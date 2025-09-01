@@ -17,6 +17,29 @@ import BOQSubmissionStep from '@/components/project-wizard/BOQSubmissionStep';
 
 /**
  * DJANGO API INTEGRATION POINTS FOR PROJECT WIZARD:
+import { fetchProjectWizard, updateProjectWizard, submitProject as apiSubmitProject, exportProjectReport, exportBOQReport } from '@/services/projectWizardApi';
+  // Download project or BOQ report
+  const handleExport = async (type: 'project-pdf' | 'project-excel' | 'boq-pdf' | 'boq-excel') => {
+    if (!projectId) return;
+    try {
+      let url = '';
+      if (type === 'project-pdf') {
+        url = await exportProjectReport(projectId, 'pdf');
+      } else if (type === 'project-excel') {
+        url = await exportProjectReport(projectId, 'excel');
+      } else if (type === 'boq-pdf') {
+        // You may need to get the BOQAnalysis id from backend; here we use projectId as a placeholder
+        url = await exportBOQReport(projectId, 'pdf');
+      } else if (type === 'boq-excel') {
+        url = await exportBOQReport(projectId, 'excel');
+      }
+      if (url) {
+        window.open(url, '_blank');
+      }
+    } catch (e) {
+      toast({ title: 'Export Error', description: 'Failed to export report.', variant: 'destructive' });
+    }
+  };
  * 
  * 1. PROJECT MANAGEMENT APIs:
  *    GET /api/project-wizard/{project_id}/ - Load existing project
@@ -321,10 +344,16 @@ const ProjectWizard = () => {
           <h1 className="text-3xl font-bold text-stone-800">Project Wizard</h1>
           <p className="text-stone-600 mt-1">Create and manage irrigation projects step by step</p>
         </div>
-        <Button onClick={saveProject} disabled={isLoading} variant="outline">
-          <Save className="w-4 h-4 mr-2" />
-          Save Draft
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={saveProject} disabled={isLoading} variant="outline">
+            <Save className="w-4 h-4 mr-2" />
+            Save Draft
+          </Button>
+          <Button onClick={() => handleExport('project-pdf')} variant="outline">Export Project PDF</Button>
+          <Button onClick={() => handleExport('project-excel')} variant="outline">Export Project Excel</Button>
+          <Button onClick={() => handleExport('boq-pdf')} variant="outline">Export BOQ PDF</Button>
+          <Button onClick={() => handleExport('boq-excel')} variant="outline">Export BOQ Excel</Button>
+        </div>
       </div>
 
       <Card className="border-0 shadow-md">

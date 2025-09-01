@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Layout from "@/components/Layout";
 import Dashboard from "@/pages/Dashboard";
+import AdminDashboard from "@/pages/AdminDashboard";
 import UserManagement from "@/pages/UserManagement";
 import Projects from "@/pages/Projects";
 import ProjectWizard from "@/pages/ProjectWizard";
@@ -37,7 +38,7 @@ const App = () => (
               </ProtectedRoute>
             }>
               <Route index element={<Dashboard />} />
-              <Route path="admin-dashboard" element={<Dashboard />} />
+              <Route path="admin-dashboard" element={<AdminDashboard />} />
               <Route path="engineer-dashboard" element={<Dashboard />} />
               <Route path="planner-dashboard" element={<Dashboard />} />
               <Route path="viewer-dashboard" element={<Dashboard />} />

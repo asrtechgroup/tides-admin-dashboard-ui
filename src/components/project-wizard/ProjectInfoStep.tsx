@@ -19,54 +19,38 @@ const ProjectInfoStep: React.FC<ProjectInfoStepProps> = ({ data, onUpdate }) => 
   const [availableWaterSourceNames, setAvailableWaterSourceNames] = useState<string[]>([]);
   const [fileCoordinates, setFileCoordinates] = useState<[number, number][]>();
 
-  // Debug logs to track state changes
-  console.log('Current data:', data);
-  console.log('Available regions:', availableRegions);
-  console.log('Available districts:', availableDistricts);
-  console.log('Available water source names:', availableWaterSourceNames);
-
+  // Cleaned up: removed debug logs
   useEffect(() => {
-    console.log('Zone changed to:', data.zone);
     if (data.zone && ZONES[data.zone as keyof typeof ZONES]) {
-      const regions = ZONES[data.zone as keyof typeof ZONES];
-      console.log('Setting available regions:', regions);
-      setAvailableRegions(regions);
+      setAvailableRegions(ZONES[data.zone as keyof typeof ZONES]);
     } else {
-      console.log('No zone selected or invalid zone, clearing regions');
       setAvailableRegions([]);
     }
   }, [data.zone]);
 
   useEffect(() => {
-    console.log('Regions changed to:', data.regions);
     const allDistricts: string[] = [];
     if (data.regions && data.regions.length > 0) {
       data.regions.forEach(region => {
         if (DISTRICTS[region]) {
-          console.log(`Adding districts for region ${region}:`, DISTRICTS[region]);
           allDistricts.push(...DISTRICTS[region]);
         }
       });
     }
-    console.log('Setting available districts:', allDistricts);
     setAvailableDistricts(allDistricts);
   }, [data.regions]);
 
   useEffect(() => {
-    console.log('Regions or water source changed:', { regions: data.regions, waterSource: data.selectedWaterSource });
     if (data.regions && data.regions.length > 0 && data.selectedWaterSource) {
       const allWaterSourceNames: string[] = [];
       data.regions.forEach(region => {
         if (WATER_SOURCE_NAMES[region] && WATER_SOURCE_NAMES[region][data.selectedWaterSource!]) {
-          console.log(`Adding water sources for region ${region}:`, WATER_SOURCE_NAMES[region][data.selectedWaterSource!]);
           allWaterSourceNames.push(...WATER_SOURCE_NAMES[region][data.selectedWaterSource!]);
         }
       });
       const uniqueWaterSourceNames = [...new Set(allWaterSourceNames)];
-      console.log('Setting available water source names:', uniqueWaterSourceNames);
       setAvailableWaterSourceNames(uniqueWaterSourceNames);
     } else {
-      console.log('No regions or water source selected, clearing water source names');
       setAvailableWaterSourceNames([]);
     }
   }, [data.regions, data.selectedWaterSource]);

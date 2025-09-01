@@ -12,6 +12,13 @@ interface ProjectDetailsCardProps {
 }
 
 const ProjectDetailsCard: React.FC<ProjectDetailsCardProps> = ({ data, onUpdate }) => {
+  // Simple validation state
+  const [touched, setTouched] = React.useState<{[k: string]: boolean}>({});
+  const errors: {[k: string]: string} = {};
+  if (!data.name) errors.name = "Project name is required.";
+  if (!data.schemeName) errors.schemeName = "Scheme name is required.";
+  // Add more validation as needed
+
   return (
     <Card>
       <CardHeader>
@@ -20,15 +27,21 @@ const ProjectDetailsCard: React.FC<ProjectDetailsCardProps> = ({ data, onUpdate 
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <Label htmlFor="projectName">Project Name</Label>
+          <Label htmlFor="projectName">Project Name <span className="text-red-500">*</span></Label>
           <Input
             id="projectName"
             value={data.name}
+            onBlur={() => setTouched(t => ({...t, name: true}))}
             onChange={(e) => onUpdate('name', e.target.value)}
             placeholder="Enter project name"
+            aria-invalid={!!errors.name}
+            aria-describedby="projectName-error"
+            required
           />
+          {touched.name && errors.name && (
+            <div id="projectName-error" className="text-xs text-red-500 mt-1">{errors.name}</div>
+          )}
         </div>
-        
         <div>
           <Label htmlFor="description">Description</Label>
           <Textarea
@@ -38,17 +51,22 @@ const ProjectDetailsCard: React.FC<ProjectDetailsCardProps> = ({ data, onUpdate 
             placeholder="Project description"
           />
         </div>
-        
         <div>
-          <Label htmlFor="schemeName">Scheme Name</Label>
+          <Label htmlFor="schemeName">Scheme Name <span className="text-red-500">*</span></Label>
           <Input
             id="schemeName"
             value={data.schemeName}
+            onBlur={() => setTouched(t => ({...t, schemeName: true}))}
             onChange={(e) => onUpdate('schemeName', e.target.value)}
             placeholder="Enter scheme name"
+            aria-invalid={!!errors.schemeName}
+            aria-describedby="schemeName-error"
+            required
           />
+          {touched.schemeName && errors.schemeName && (
+            <div id="schemeName-error" className="text-xs text-red-500 mt-1">{errors.schemeName}</div>
+          )}
         </div>
-
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label htmlFor="totalArea">Total Area (Ha)</Label>
@@ -58,6 +76,7 @@ const ProjectDetailsCard: React.FC<ProjectDetailsCardProps> = ({ data, onUpdate 
               value={data.totalArea || ''}
               onChange={(e) => onUpdate('totalArea', parseFloat(e.target.value) || 0)}
               placeholder="0"
+              min={0}
             />
           </div>
           <div>
@@ -68,6 +87,7 @@ const ProjectDetailsCard: React.FC<ProjectDetailsCardProps> = ({ data, onUpdate 
               value={data.potentialArea || ''}
               onChange={(e) => onUpdate('potentialArea', parseFloat(e.target.value) || 0)}
               placeholder="0"
+              min={0}
             />
           </div>
         </div>
