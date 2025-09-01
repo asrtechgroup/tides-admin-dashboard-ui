@@ -23,10 +23,19 @@ export interface CropCalendarEntry {
 }
 
 export interface TechnologySelection {
-  technologyType: 'surface' | 'subsurface' | 'pressurized' | '';
-  irrigationType: string;
+  technology_name: 'surface' | 'subsurface' | 'pressurized' | '';
+  irrigation_type: string;
+  description?: string;
   efficiency: number;
-  specifications: string;
+  water_requirement: number;
+  lifespan: number;
+  maintenance_level: 'low' | 'medium' | 'high';
+  suitable_soil_types: string[];
+  suitable_crop_types: string[];
+  suitable_farm_sizes: string[];
+  water_quality_requirements: string[];
+  suitable_topography: string[];
+  climate_zones: string[];
 }
 
 export interface ResourceItem {

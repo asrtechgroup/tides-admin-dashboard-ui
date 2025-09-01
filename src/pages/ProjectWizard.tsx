@@ -85,10 +85,19 @@ const ProjectWizard = () => {
     },
     cropCalendar: [],
     technologySelection: {
-      technologyType: '',
-      irrigationType: '',
+      technology_name: '',
+      irrigation_type: '',
+      description: '',
       efficiency: 0,
-      specifications: ''
+      water_requirement: 0,
+      lifespan: 0,
+      maintenance_level: 'medium',
+      suitable_soil_types: [],
+      suitable_crop_types: [],
+      suitable_farm_sizes: [],
+      water_quality_requirements: [],
+      suitable_topography: [],
+      climate_zones: []
     },
     cropWaterRequirements: [],
     hydraulicDesign: { designParameters: {} },

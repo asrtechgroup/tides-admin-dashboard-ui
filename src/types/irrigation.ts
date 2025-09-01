@@ -38,3 +38,22 @@ export interface SuitabilityCriteria {
   topography: string[];
   climateZones: string[];
 }
+
+export interface TechnologyEntry {
+  id?: string;
+  technology_name: 'surface' | 'subsurface' | 'pressurized';
+  irrigation_type: string;
+  description?: string;
+  efficiency: number;
+  water_requirement: number;
+  lifespan: number;
+  maintenance_level: 'low' | 'medium' | 'high';
+  suitable_soil_types: string[];
+  suitable_crop_types: string[];
+  suitable_farm_sizes: string[];
+  water_quality_requirements: string[];
+  suitable_topography: string[];
+  climate_zones: string[];
+  created_at?: string;
+  updated_at?: string;
+}

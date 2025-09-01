@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { resourcesAPI } from '@/services/api';
+import { materialsAPI } from '@/services/api';
 
 interface SuitabilityCriterion {
   id: string;
@@ -22,7 +22,7 @@ export const useSuitabilityCriteria = () => {
   // Fetch from backend on mount and after any change
   const fetchCriteria = async () => {
     try {
-      const data: any = await resourcesAPI.getSuitabilityCriteria();
+      const data: any = await materialsAPI.getSuitabilityCriteria();
       setCriteria(data.results || data);
     } catch (error) {
       toast.error('Failed to load suitability criteria from backend.');
@@ -36,7 +36,7 @@ export const useSuitabilityCriteria = () => {
 
   const handleAddCriterion = async (data: any) => {
     try {
-      await resourcesAPI.createSuitabilityCriterion(data);
+      await materialsAPI.createSuitabilityCriterion(data);
       toast.success('Suitability criterion added successfully');
       setShowCriteriaForm(false);
       fetchCriteria();
@@ -53,7 +53,7 @@ export const useSuitabilityCriteria = () => {
   const handleUpdateCriterion = async (data: any) => {
     if (!editingCriterion) return;
     try {
-      await resourcesAPI.updateSuitabilityCriterion(editingCriterion.id, data);
+      await materialsAPI.updateSuitabilityCriterion(editingCriterion.id, data);
       toast.success('Suitability criterion updated successfully');
       setShowCriteriaForm(false);
       setEditingCriterion(undefined);
@@ -65,7 +65,7 @@ export const useSuitabilityCriteria = () => {
 
   const handleDeleteCriterion = async (id: string) => {
     try {
-      await resourcesAPI.deleteSuitabilityCriterion(id);
+      await materialsAPI.deleteSuitabilityCriterion(id);
       toast.success('Suitability criterion deleted successfully');
       fetchCriteria();
     } catch (error) {

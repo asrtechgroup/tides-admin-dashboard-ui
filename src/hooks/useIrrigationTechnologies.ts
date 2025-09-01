@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { IrrigationTechnology } from '@/types/irrigation';
 import { toast } from 'sonner';
-import { resourcesAPI } from '@/services/api';
+import { materialsAPI } from '@/services/api';
 
 export const useIrrigationTechnologies = () => {
   const [technologies, setTechnologies] = useState<IrrigationTechnology[]>([]);
@@ -11,7 +11,7 @@ export const useIrrigationTechnologies = () => {
   useEffect(() => {
     const fetchTechnologies = async () => {
       try {
-        const data: any = await resourcesAPI.getTechnologies();
+        const data: any = await materialsAPI.getTechnologies();
         setTechnologies(data.results || data);
       } catch (error) {
         toast.error('Failed to load irrigation technologies from backend.');
@@ -22,7 +22,8 @@ export const useIrrigationTechnologies = () => {
   }, []);
 
   const handleAddTechnology = () => {
-    toast.error('Backend endpoint for adding irrigation technology is missing. Please implement it.');
+    setShowTechnologyForm(true);
+    setEditingTechnology(undefined);
   };
 
   const handleEditTechnology = (technology: IrrigationTechnology) => {
@@ -30,12 +31,38 @@ export const useIrrigationTechnologies = () => {
     setShowTechnologyForm(true);
   };
 
-  const handleUpdateTechnology = () => {
-    toast.error('Backend endpoint for updating irrigation technology is missing. Please implement it.');
+  const handleSubmitTechnology = async (data: any) => {
+    try {
+      if (editingTechnology) {
+        await materialsAPI.updateTechnology(editingTechnology.id, data);
+        toast.success('Technology updated successfully');
+      } else {
+        await materialsAPI.createTechnology(data);
+        toast.success('Technology created successfully');
+      }
+      
+      // Refresh the technologies list
+      const updatedData: any = await materialsAPI.getTechnologies();
+      setTechnologies(updatedData.results || updatedData);
+      
+      setShowTechnologyForm(false);
+      setEditingTechnology(undefined);
+    } catch (error) {
+      toast.error(editingTechnology ? 'Failed to update technology' : 'Failed to create technology');
+    }
   };
 
-  const handleDeleteTechnology = () => {
-    toast.error('Backend endpoint for deleting irrigation technology is missing. Please implement it.');
+  const handleDeleteTechnology = async (id: string) => {
+    try {
+      await materialsAPI.deleteTechnology(id);
+      toast.success('Technology deleted successfully');
+      
+      // Refresh the technologies list
+      const updatedData: any = await materialsAPI.getTechnologies();
+      setTechnologies(updatedData.results || updatedData);
+    } catch (error) {
+      toast.error('Failed to delete technology');
+    }
   };
 
   const handleCancelForm = () => {
@@ -50,7 +77,7 @@ export const useIrrigationTechnologies = () => {
     setShowTechnologyForm,
     handleAddTechnology,
     handleEditTechnology,
-    handleUpdateTechnology,
+    handleSubmitTechnology,
     handleDeleteTechnology,
     handleCancelForm,
   };
