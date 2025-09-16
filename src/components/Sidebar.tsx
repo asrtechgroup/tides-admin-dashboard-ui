@@ -33,7 +33,7 @@ const allMenuItems: MenuItem[] = [
   { icon: TrendingUp, label: 'Dashboard', path: '/', permission: 'dashboard_admin' },
   { icon: Users, label: 'User Management', path: '/users', permission: 'user_management' },
   { icon: Activity, label: 'Activity Logs', path: '/activity-logs', permission: 'activity_logs' },
-  { icon: FolderOpen, label: 'Projects & Schemes', path: '/projects', permission: 'view_projects' },
+  { icon: FolderOpen, label: 'Projects & Schemes', path: '/project-scheme', permission: 'view_projects' },
   { icon: Calendar, label: 'Project Wizard', path: '/project-wizard', permission: 'project_wizard' },
   { icon: FileText, label: 'BOQ Builder', path: '/boq-builder', permission: 'boq_builder' },
   { icon: Droplets, label: 'Irrigation Technologies', path: '/irrigation-tech', permission: 'irrigation_tech' },

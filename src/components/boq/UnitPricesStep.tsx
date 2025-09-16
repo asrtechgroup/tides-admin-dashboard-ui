@@ -61,7 +61,8 @@ const UnitPricesStep: React.FC<UnitPricesStepProps> = ({
         ]);
 
       // Convert backend data to our format
-      const labor = (laborData?.results || laborData || []).map((item: any) => ({
+      const laborArray = Array.isArray(laborData) ? laborData : (laborData as any)?.results || [];
+      const labor = laborArray.map((item: any) => ({
         id: item.id,
         name: item.name || item.skill_level,
         description: item.description || `${item.skill_level} - ${item.trade_specialization}`,
@@ -70,7 +71,8 @@ const UnitPricesStep: React.FC<UnitPricesStepProps> = ({
         category: 'labor'
       }));
 
-      const materials = (materialsData?.results || materialsData || []).map((item: any) => ({
+      const materialsArray = Array.isArray(materialsData) ? materialsData : (materialsData as any)?.results || [];
+      const materials = materialsArray.map((item: any) => ({
         id: item.id,
         name: item.name,
         description: item.specifications || item.description || '',
@@ -79,7 +81,8 @@ const UnitPricesStep: React.FC<UnitPricesStepProps> = ({
         category: item.category?.name || 'materials'
       }));
 
-      const equipment = (equipmentData?.results || equipmentData || []).map((item: any) => ({
+      const equipmentArray = Array.isArray(equipmentData) ? equipmentData : (equipmentData as any)?.results || [];
+      const equipment = equipmentArray.map((item: any) => ({
         id: item.id,
         name: item.name,
         description: item.specifications || item.description || '',
