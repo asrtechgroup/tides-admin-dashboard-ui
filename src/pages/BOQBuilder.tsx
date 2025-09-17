@@ -45,7 +45,7 @@ interface WorkItem {
 }
 
 const BOQBuilder = () => {
-  const { user, hasPermission } = useAuth();
+  const { hasPermission } = useAuth();
   const [currentStep, setCurrentStep] = useState('project-data');
   
   // Workflow data state
@@ -247,13 +247,6 @@ const BOQBuilder = () => {
               Start Over
             </Button>
           </div>
-        </div>
-
-        {/* Welcome message for authenticated user */}
-        <div className="mb-6 p-4 bg-primary/5 border border-primary/20 rounded-lg">
-          <p className="text-sm">
-            <strong>Welcome, {user?.name}!</strong> You are now logged in and can proceed with the BOQ Builder workflow.
-          </p>
         </div>
 
         {/* Workflow Stepper */}

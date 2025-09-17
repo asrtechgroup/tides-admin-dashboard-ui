@@ -92,9 +92,22 @@ const TechnologySelectionStep: React.FC<TechnologySelectionStepProps> = ({
     );
   }
 
-  const technologyNames = getTechnologyNames();
+  // Always get technology names as an array
+  const technologyNames = Array.isArray(getTechnologyNames()) ? getTechnologyNames() : [];
   const availableIrrigationTypes = selectedTechnology ? getIrrigationTypesForTechnology(selectedTechnology) : [];
   const selectedTechnologyDetails = selectedTechnology && selectedIrrigationType ? getTechnologyDetails(selectedTechnology, selectedIrrigationType) : null;
+
+  // User-friendly message if no technologies are available
+  if (!technologyNames.length) {
+    return (
+      <Card>
+        <CardContent className="p-8 text-center">
+          <p className="text-lg font-semibold mb-2">No irrigation technologies available</p>
+          <p className="text-muted-foreground">Please contact your administrator or try again later.</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>

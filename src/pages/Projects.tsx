@@ -151,7 +151,7 @@ const Projects = () => {
           <p className="text-stone-600 mt-1">Manage your irrigation project drafts</p>
         </div>
         <Button asChild>
-          <Link to="/project-wizard">
+          <Link to="/project-scheme">
             <Plus className="w-4 h-4 mr-2" />
             New Project
           </Link>

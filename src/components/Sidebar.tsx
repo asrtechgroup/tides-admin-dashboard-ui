@@ -34,7 +34,7 @@ const allMenuItems: MenuItem[] = [
   { icon: Users, label: 'User Management', path: '/users', permission: 'user_management' },
   { icon: Activity, label: 'Activity Logs', path: '/activity-logs', permission: 'activity_logs' },
   { icon: FolderOpen, label: 'Projects & Schemes', path: '/project-scheme', permission: 'view_projects' },
-  { icon: Calendar, label: 'Project Wizard', path: '/project-wizard', permission: 'project_wizard' },
+  { icon: Calendar, label: 'Project Scheme', path: '/project-scheme', permission: 'project_scheme' },
   { icon: FileText, label: 'BOQ Builder', path: '/boq-builder', permission: 'boq_builder' },
   { icon: Droplets, label: 'Irrigation Technologies', path: '/irrigation-tech', permission: 'irrigation_tech' },
   { icon: Map, label: 'GIS Planning', path: '/gis-planning', permission: 'gis_planning' },

@@ -8,7 +8,6 @@ import Layout from "@/components/Layout";
 import Dashboard from "@/pages/Dashboard";
 import UserManagement from "@/pages/UserManagement";
 import Projects from "@/pages/Projects";
-import ProjectWizard from "@/pages/ProjectWizard";
 import BOQBuilder from "@/pages/BOQBuilder";
 import IrrigationTech from "@/pages/IrrigationTech";
 import GISPlanning from "@/pages/GISPlanning";
@@ -19,6 +18,7 @@ import Login from "@/pages/Login";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 import ActivityLogs from "@/pages/ActivityLogs";
+import ProjectScheme from "./pages/ProjectScheme";
 
 const queryClient = new QueryClient();
 
@@ -44,7 +44,7 @@ const App = () => (
               <Route path="users" element={<UserManagement />} />
               <Route path="activity-logs" element={<ActivityLogs />} />
               <Route path="projects" element={<Projects />} />
-              <Route path="project-wizard/:projectId?" element={<ProjectWizard />} />
+              <Route path="project-scheme/:projectId?" element={<ProjectScheme/>} />
               <Route path="boq-builder" element={<BOQBuilder />} />
               <Route path="irrigation-tech" element={<IrrigationTech />} />
               <Route path="gis-planning" element={<GISPlanning />} />
@@ -52,7 +52,7 @@ const App = () => (
               <Route path="reports" element={<Reports />} />
               <Route path="settings" element={<Settings />} />
             </Route>
-            <Route path="*" element={<NotFound />} />
+            <Route path="*" element={<NotFound />} />4
           </Routes>
         </BrowserRouter>
       </AuthProvider>

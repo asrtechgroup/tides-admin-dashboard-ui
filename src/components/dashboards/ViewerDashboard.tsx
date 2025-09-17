@@ -5,11 +5,13 @@ import { Badge } from '@/components/ui/badge';
 import { Eye, FolderOpen, BarChart3, MapPin } from 'lucide-react';
 import { projectsAPI } from '@/services/api';
 import { DashboardStats } from '@/types/irrigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 const ViewerDashboard = () => {
   const [kpiData, setKpiData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -54,6 +56,13 @@ const ViewerDashboard = () => {
 
   return (
     <div className="space-y-6">
+      {/* Welcome message for authenticated user */}
+      <div className="mb-6 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+        <p className="text-sm">
+          <strong>Welcome, {user?.name}!</strong> You are now logged in and can proceed with your workflow.
+        </p>
+      </div>
+      
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>

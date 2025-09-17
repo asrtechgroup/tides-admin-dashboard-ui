@@ -13,7 +13,13 @@ export const useTechnologySelection = () => {
       try {
         setLoading(true);
         const data = await materialsAPI.getTechnologies();
-        setTechnologies(data as TechnologyEntry[]);
+        let techs: any[] = [];
+        if (data && typeof data === 'object' && 'results' in data && Array.isArray((data as any).results)) {
+          techs = (data as any).results;
+        } else if (Array.isArray(data)) {
+          techs = data;
+        }
+        setTechnologies(techs);
       } catch (error) {
         console.error('Failed to load technology options:', error);
         toast.error('Failed to load technology options');
