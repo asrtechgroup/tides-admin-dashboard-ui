@@ -16,11 +16,16 @@ const roleDashboardMap: Record<string, string> = {
 };
 
 const Login = () => {
+  console.log('Login component rendering');
+  
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  console.log('About to call useAuth...');
   const { login, isAuthenticated, user } = useAuth();
+  console.log('useAuth successful, isAuthenticated:', isAuthenticated, 'user:', user);
 
   // Role-based redirect after login using backend user role
   if (isAuthenticated && user) {
