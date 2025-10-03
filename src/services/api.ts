@@ -60,14 +60,9 @@ export const authAPI = {
    * Django endpoint: POST /api/auth/token/ (JWT) or POST /api/auth/login/
    */
   login: async (credentials: { username: string; password: string }) => {
-    console.log('Login attempt with credentials:', { username: credentials.username, password: '***' });
-    console.log('API Base URL:', API_BASE_URL);
-    
     try {
       // Try JWT token endpoint first
-      console.log('Trying JWT token endpoint: /auth/token/');
       const response = await api.post<{ access: string; refresh: string }>('/auth/token/', credentials);
-      console.log('JWT login successful', response.data);
       const { access, refresh } = response.data;
       
       // Store auth data
@@ -79,25 +74,17 @@ export const authAPI = {
       return response.data;
     } catch (error) {
       // Fallback to custom login endpoint if JWT fails
-      console.error('JWT login failed:', error);
-      console.log('Trying custom login endpoint: /auth/login/');
+      console.warn('JWT login failed, trying custom login endpoint:', error);
+      const response = await api.post<{ access: string; refresh: string }>('/auth/login/', credentials);
+      const { access, refresh } = response.data;
       
-      try {
-        const response = await api.post<{ access: string; refresh: string }>('/auth/login/', credentials);
-        console.log('Custom login successful', response.data);
-        const { access, refresh } = response.data;
-        
-        // Store auth data
-        localStorage.setItem('auth_token', access);
-        if (refresh) {
-          localStorage.setItem('refresh_token', refresh);
-        }
-        
-        return response.data;
-      } catch (fallbackError) {
-        console.error('Both login endpoints failed:', fallbackError);
-        throw fallbackError;
+      // Store auth data
+      localStorage.setItem('auth_token', access);
+      if (refresh) {
+        localStorage.setItem('refresh_token', refresh);
       }
+      
+      return response.data;
     }
   },
 
