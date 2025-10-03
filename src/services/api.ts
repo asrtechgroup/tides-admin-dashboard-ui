@@ -8,42 +8,6 @@
 import axios from 'axios';
 import { toast } from '@/hooks/use-toast';
 
-// Import mock data
-import { mockTechnologies, mockCrops } from '@/data/mock-technologies';
-import { mockMaterials, mockEquipment, mockLabor, mockResourceCategories } from '@/data/mock-resources';
-
-// Import extended APIs
-export * from './api-projects';
-
-// Mock mode flag - set to true to use mock data
-const USE_MOCK_DATA = true;
-
-// Mock API delay to simulate network requests
-const mockDelay = (ms: number = 500) => new Promise(resolve => setTimeout(resolve, ms));
-
-// Add debug logging for all requests
-const logRequest = (method: string, url: string, data?: any) => {
-  console.log(`🔍 API Request: ${method.toUpperCase()} ${url}`);
-  if (data) console.log('📤 Request data:', data);
-};
-
-const logResponse = (method: string, url: string, response: any) => {
-  console.log(`✅ API Response: ${method.toUpperCase()} ${url}`);
-  console.log('📥 Response data:', response);
-};
-
-const logError = (method: string, url: string, error: any) => {
-  console.error(`❌ API Error: ${method.toUpperCase()} ${url}`);
-  console.error('💥 Error details:', error);
-  if (error.response) {
-    console.error('📋 Response status:', error.response.status);
-    console.error('📋 Response data:', error.response.data);
-  }
-  if (error.code) {
-    console.error('🔧 Error code:', error.code);
-  }
-};
-
 // Django API Integration
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api';
 
@@ -92,40 +56,10 @@ api.interceptors.response.use(
 // Authentication API
 export const authAPI = {
   /**
-   * User login with mock data support
+   * User login
    * Django endpoint: POST /api/auth/token/ (JWT) or POST /api/auth/login/
    */
   login: async (credentials: { username: string; password: string }) => {
-    const method = 'POST';
-    const url = '/auth/login/';
-    
-    if (USE_MOCK_DATA) {
-      logRequest(method, url, { username: credentials.username, password: '[HIDDEN]' });
-      await mockDelay();
-      
-      // Mock login - accept any credentials
-      const mockResponse = {
-        access: 'mock-jwt-token-' + Date.now(),
-        refresh: 'mock-refresh-token-' + Date.now(),
-        user: {
-          id: 1,
-          username: credentials.username,
-          email: `${credentials.username}@tides.com`,
-          role: 'admin',
-          first_name: credentials.username.split('.')[0] || credentials.username,
-          last_name: credentials.username.split('.')[1] || 'User'
-        }
-      };
-      
-      // Store auth data
-      localStorage.setItem('auth_token', mockResponse.access);
-      localStorage.setItem('refresh_token', mockResponse.refresh);
-      localStorage.setItem('tides_user', JSON.stringify(mockResponse.user));
-      
-      logResponse(method, url, { ...mockResponse, access: '[HIDDEN]', refresh: '[HIDDEN]' });
-      return mockResponse;
-    }
-    
     console.log('Login attempt with credentials:', { username: credentials.username, password: '***' });
     console.log('API Base URL:', API_BASE_URL);
     
@@ -162,7 +96,6 @@ export const authAPI = {
         return response.data;
       } catch (fallbackError) {
         console.error('Both login endpoints failed:', fallbackError);
-        logError(method, url, fallbackError);
         throw fallbackError;
       }
     }
@@ -485,107 +418,12 @@ export const materialsAPI = {
   },
 
   /**
-   * Get irrigation technologies with mock data support
+   * Get irrigation technologies
    * Django endpoint: GET /api/materials/technologies/
    */
   getTechnologies: async () => {
-    const method = 'GET';
-    const url = '/materials/technologies/';
-    
-    if (USE_MOCK_DATA) {
-      logRequest(method, url);
-      await mockDelay();
-      logResponse(method, url, mockTechnologies);
-      return mockTechnologies;
-    }
-    
-    try {
-      logRequest(method, url);
-      const response = await api.get(url);
-      logResponse(method, url, response.data);
-      return response.data;
-    } catch (error) {
-      logError(method, url, error);
-      throw error;
-    }
-  },
-
-  /**
-   * Get crops with mock data support
-   * Django endpoint: GET /api/materials/crops/
-   */
-  getCrops: async () => {
-    const method = 'GET';
-    const url = '/materials/crops/';
-    
-    if (USE_MOCK_DATA) {
-      logRequest(method, url);
-      await mockDelay();
-      logResponse(method, url, mockCrops);
-      return mockCrops;
-    }
-    
-    try {
-      logRequest(method, url);
-      const response = await api.get(url);
-      logResponse(method, url, response.data);
-      return response.data;
-    } catch (error) {
-      logError(method, url, error);
-      throw error;
-    }
-  },
-
-  /**
-   * Get labor rates with mock data support
-   * Django endpoint: GET /api/materials/labor/
-   */
-  getLabor: async () => {
-    const method = 'GET';
-    const url = '/materials/labor/';
-    
-    if (USE_MOCK_DATA) {
-      logRequest(method, url);
-      await mockDelay();
-      logResponse(method, url, mockLabor);
-      return mockLabor;
-    }
-    
-    try {
-      logRequest(method, url);
-      const response = await api.get(url);
-      logResponse(method, url, response.data);
-      return response.data;
-    } catch (error) {
-      logError(method, url, error);
-      throw error;
-    }
-  },
-
-  /**
-   * Get resource categories with mock data support
-   * Django endpoint: GET /api/materials/resource-categories/
-   */
-  getResourceCategories: async () => {
-    const method = 'GET';
-    const url = '/materials/resource-categories/';
-    
-    if (USE_MOCK_DATA) {
-      logRequest(method, url);
-      await mockDelay();
-      logResponse(method, url, mockResourceCategories);
-      return mockResourceCategories;
-    }
-    
-    try {
-      logRequest(method, url);
-      const response = await api.get(url);
-      logResponse(method, url, response.data);
-      return response.data;
-    } catch (error) {
-      logError(method, url, error);
-      throw error;
-    }
+    const response = await api.get('/materials/technologies/');
+    return response.data;
   },
 
   /**
