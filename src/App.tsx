@@ -10,6 +10,8 @@ import UserManagement from "@/pages/UserManagement";
 import Projects from "@/pages/Projects";
 import ProjectWizard from "@/pages/ProjectWizard";
 import ProjectScheme from "@/pages/ProjectScheme";
+import NewProject from "@/pages/NewProject";
+import StoreManualBOQ from "@/pages/StoreManualBOQ";
 import BOQBuilder from "@/pages/BOQBuilder";
 import IrrigationTech from "@/pages/IrrigationTech";
 import GISPlanning from "@/pages/GISPlanning";
@@ -45,6 +47,8 @@ const App = () => (
               <Route path="users" element={<UserManagement />} />
               <Route path="activity-logs" element={<ActivityLogs />} />
               <Route path="projects" element={<Projects />} />
+              <Route path="projects/new" element={<NewProject />} />
+              <Route path="projects/manual-boq" element={<StoreManualBOQ />} />
               <Route path="project-wizard/:projectId?" element={<ProjectWizard />} />
               <Route path="project-scheme/:projectId?" element={<ProjectScheme />} />
               <Route path="boq-builder" element={<BOQBuilder />} />

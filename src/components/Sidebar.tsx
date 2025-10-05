@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,7 +14,11 @@ import {
   TrendingUp,
   FolderOpen,
   BarChart3,
-  Activity
+  Activity,
+  ChevronDown,
+  ChevronRight,
+  PlusCircle,
+  Save
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -46,6 +50,7 @@ const allMenuItems: MenuItem[] = [
 const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
   const location = useLocation();
   const { user, hasPermission } = useAuth();
+  const [projectsExpanded, setProjectsExpanded] = useState(true);
 
   // Filter menu items based on user permissions
   const menuItems = allMenuItems.filter(item => {
@@ -62,6 +67,11 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
     }
     return hasPermission(item.permission);
   });
+
+  const projectSubItems = [
+    { icon: PlusCircle, label: 'New Project', path: '/projects/new' },
+    { icon: Save, label: 'Store Manual BOQ', path: '/projects/manual-boq' }
+  ];
 
   return (
     <div
@@ -92,6 +102,62 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
+          
+          // Special handling for Projects menu item
+          if (item.path === '/project-scheme') {
+            return (
+              <div key={item.path}>
+                <button
+                  onClick={() => setProjectsExpanded(!projectsExpanded)}
+                  className={cn(
+                    "w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
+                    "text-emerald-100 hover:bg-emerald-700/50 hover:text-white"
+                  )}
+                >
+                  <Icon className={cn("flex-shrink-0", collapsed ? "w-6 h-6" : "w-5 h-5")} />
+                  {!collapsed && (
+                    <>
+                      <span className="text-sm font-medium truncate flex-1 text-left">
+                        Projects
+                      </span>
+                      {projectsExpanded ? (
+                        <ChevronDown className="w-4 h-4" />
+                      ) : (
+                        <ChevronRight className="w-4 h-4" />
+                      )}
+                    </>
+                  )}
+                </button>
+                
+                {/* Project sub-items */}
+                {!collapsed && projectsExpanded && (
+                  <div className="ml-4 mt-1 space-y-1">
+                    {projectSubItems.map((subItem) => {
+                      const SubIcon = subItem.icon;
+                      const isSubActive = location.pathname === subItem.path;
+                      return (
+                        <Link
+                          key={subItem.path}
+                          to={subItem.path}
+                          className={cn(
+                            "flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200",
+                            isSubActive
+                              ? "bg-emerald-700 text-white shadow-md"
+                              : "text-emerald-200 hover:bg-emerald-700/50 hover:text-white"
+                          )}
+                        >
+                          <SubIcon className="w-4 h-4 flex-shrink-0" />
+                          <span className="text-sm font-medium truncate">
+                            {subItem.label}
+                          </span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          }
           
           return (
             <Link
